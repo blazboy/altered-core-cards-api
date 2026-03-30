@@ -1,0 +1,11 @@
+api_platform:
+    title: Altered Core API
+    version: 1.0.0
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ['Accept', 'Accept-Language']
+    formats:
+        json: ['application/json']
+    docs_formats:
+        json: ['application/json']

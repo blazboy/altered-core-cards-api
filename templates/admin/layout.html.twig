@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin — Altered Core{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+    {% block stylesheets %}{% endblock %}
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 antialiased">
+
+<nav class="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 fixed w-full z-30 top-0">
+    <div class="px-4 py-3 lg:px-6 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="text-xl font-bold text-gray-900 dark:text-white">Altered Core</span>
+            <span class="text-gray-400">/</span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">Admin</span>
+        </div>
+        <div class="flex items-center gap-4">
+<a href="{{ path('admin_effects_index') }}"
+               class="text-sm font-medium {{ app.request.attributes.get('_route') starts with 'admin_effects' ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900' }} dark:text-gray-300">
+                Effets
+            </a>
+            <a href="{{ path('admin_abilities_index') }}"
+               class="text-sm font-medium {{ app.request.attributes.get('_route') starts with 'admin_abilities' ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900' }} dark:text-gray-300">
+                Abilities
+            </a>
+            <span class="text-gray-300 dark:text-gray-600">|</span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">{{ app.user.email }}</span>
+            <a href="{{ path('admin_logout') }}"
+               class="text-sm text-gray-500 hover:text-red-600 dark:text-gray-400">
+                Déconnexion
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="pt-16">
+    <div class="px-4 py-6 lg:px-8 w-full">
+        {% for message in app.flashes('success') %}
+            <div class="flex items-center p-4 mb-4 text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400" role="alert">
+                <svg class="shrink-0 w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/></svg>
+                <span class="ms-2 text-sm font-medium">{{ message }}</span>
+            </div>
+        {% endfor %}
+
+        {% block content %}{% endblock %}
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+{% block javascripts %}{% endblock %}
+</body>
+</html>

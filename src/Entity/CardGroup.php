@@ -1,0 +1,339 @@
+<?php
+
+namespace App\Entity;
+
+use App\Filter\ReferenceFilter;
+use App\Model\TimestampInterface;
+use App\Entity\Rarity;
+use App\Model\TimestampTrait;
+use App\Repository\CardGroupRepository;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiProperty;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
+
+#[ORM\Index(name: "idx_card_group_slug", fields: ["slug"])]
+#[ORM\Index(name: "idx_card_group_faction", fields: ["faction"])]
+#[ORM\Index(name: "idx_card_group_card_type", fields: ["cardType"])]
+#[ORM\Index(name: "idx_card_group_main_cost", fields: ["mainCost"])]
+#[ORM\Index(name: "idx_card_group_recall_cost", fields: ["recallCost"])]
+#[ORM\Entity(repositoryClass: CardGroupRepository::class)]
+#[ApiResource(
+    operations: [
+        new Get(normalizationContext: ['groups' => ['card_group:read', 'card_group:read:detail']]),
+        new GetCollection(
+            provider: \App\State\CardGroupCollectionProvider::class,
+            normalizationContext: ['groups' => ['card_group:read']],
+            cacheHeaders: ['max_age' => 3600, 'shared_max_age' => 3600, 'vary' => ['Accept', 'Accept-Language']],
+            paginationFetchJoinCollection: false,
+        ),
+    ],
+    paginationItemsPerPage: 30,
+)]
+#[ApiFilter(SearchFilter::class, properties: [
+    'slug'                   => 'exact',
+    'faction.code'           => 'exact',
+    'mainCost'               => 'exact',
+    'recallCost'             => 'exact',
+    'oceanPower'             => 'exact',
+    'mountainPower'          => 'exact',
+    'forestPower'            => 'exact',
+    'isBanned'               => 'exact',
+    'isErrated'              => 'exact',
+    'isSuspended'            => 'exact',
+    'rarity.reference'    => 'exact',
+    'cards.set.reference' => 'exact',
+])]
+#[ApiFilter(ReferenceFilter::class, properties: ['cardType', 'subTypes'])]
+#[ApiFilter(\App\Filter\EffectTriggerTypeFilter::class, properties: ['effectTriggerType'])]
+#[ApiFilter(\App\Filter\EffectKeywordFilter::class, properties: ['effectKeyword'])]
+#[ApiFilter(\App\Filter\HasNoEffectFilter::class, properties: ['hasNoEffect'])]
+#[ApiFilter(\App\Filter\SameTriggerCountFilter::class, properties: ['minSameTriggerCount'])]
+#[ApiFilter(\App\Filter\EffectSlotFilter::class, properties: ['effectSlot'])]
+#[ApiFilter(OrderFilter::class, properties: ['mainCost', 'recallCost'])]
+class CardGroup implements TimestampInterface
+{
+    use TimestampTrait;
+
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    private ?int $id = null;
+
+    /**
+     * Stable logical identifier, e.g. "OR-017".
+     * Derived from faction code + zero-padded card number.
+     */
+    #[ORM\Column(length: 100, unique: true)]
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    private string $slug;
+
+    #[ORM\ManyToOne(targetEntity: Faction::class)]
+    #[Groups(['card_group:read', 'card:list', 'card:read', 'card_group:read:detail'])]
+    private ?Faction $faction = null;
+
+    #[ORM\ManyToOne(targetEntity: Rarity::class, cascade: ['persist'])]
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    private ?Rarity $rarity = null;
+
+    #[ORM\ManyToOne(targetEntity: CardType::class, cascade: ['persist'])]
+    #[Groups(['card_group:read', 'card_group:read:detail', 'card:read'])]
+    private ?CardType $cardType = null;
+
+    #[ORM\ManyToMany(targetEntity: CardSubType::class, cascade: ['persist'])]
+    #[ORM\JoinTable(name: 'card_group_sub_type_link')]
+    #[Groups(['card_group:read', 'card:read'])]
+    #[SerializedName('cardSubTypes')]
+    #[ApiProperty(fetchEager: false)]
+    private Collection $subTypes;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    private ?int $mainCost = null;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    private ?int $recallCost = null;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    private ?int $oceanPower = null;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    private ?int $mountainPower = null;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    private ?int $forestPower = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $echoEffect = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    private ?string $permanent = null;
+
+    #[ORM\ManyToOne(targetEntity: MainEffect::class, cascade: ['persist'])]
+    #[Groups(['card_group:read', 'card:read'])]
+    private ?MainEffect $effect1 = null;
+
+    #[ORM\ManyToOne(targetEntity: MainEffect::class, cascade: ['persist'])]
+    #[Groups(['card_group:read', 'card:read'])]
+    private ?MainEffect $effect2 = null;
+
+    #[ORM\ManyToOne(targetEntity: MainEffect::class, cascade: ['persist'])]
+    #[Groups(['card_group:read', 'card:read'])]
+    private ?MainEffect $effect3 = null;
+
+    #[ORM\ManyToOne(targetEntity: CardHistoryStatus::class, cascade: ['persist'])]
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    private ?CardHistoryStatus $cardHistoryStatus = null;
+
+    #[ORM\Column(type: 'boolean', nullable: false)]
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    private bool $isBanned = false;
+
+    #[ORM\Column(type: 'boolean', nullable: false)]
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    private bool $isErrated = false;
+
+    #[ORM\Column(type: 'boolean', nullable: false)]
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    private bool $isSuspended = false;
+
+    #[ORM\OneToMany(targetEntity: CardRuling::class, mappedBy: 'cardGroup', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $cardRulings;
+
+    #[ORM\OneToMany(targetEntity: LoreEntry::class, mappedBy: 'cardGroup', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $loreEntries;
+
+    #[ORM\OneToMany(targetEntity: CardGroupTranslation::class, mappedBy: 'cardGroup', cascade: ['persist'])]
+    private Collection $translations;
+
+    #[ORM\OneToMany(targetEntity: Card::class, mappedBy: 'cardGroup')]
+    #[Groups(['card_group:read', 'card_group:read:detail'])]
+    #[ApiProperty(fetchEager: false)]
+    private Collection $cards;
+
+    public function __construct()
+    {
+        $this->creationDate = new \DateTimeImmutable();
+        $this->subTypes     = new ArrayCollection();
+        $this->cardRulings  = new ArrayCollection();
+        $this->loreEntries  = new ArrayCollection();
+        $this->translations = new ArrayCollection();
+        $this->cards        = new ArrayCollection();
+    }
+
+    // --- Virtual getters for API ---
+
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    #[SerializedName('name')]
+    public function getLocalizedNames(): array
+    {
+        $result = [];
+        foreach ($this->translations as $t) {
+            if ($t->getName() !== null) {
+                $result[$t->getLocale()] = $t->getName();
+            }
+        }
+        return $result;
+    }
+
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    #[SerializedName('mainEffect')]
+    public function getLocalizedMainEffects(): array
+    {
+        $result = [];
+        foreach ($this->translations as $t) {
+            if ($t->getMainEffect() !== null) {
+                $result[$t->getLocale()] = $t->getMainEffect();
+            }
+        }
+        return $result;
+    }
+
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
+    #[SerializedName('echoEffect')]
+    public function getLocalizedEchoEffects(): array
+    {
+        $result = [];
+        foreach ($this->translations as $t) {
+            if ($t->getEchoEffect() !== null) {
+                $result[$t->getLocale()] = $t->getEchoEffect();
+            }
+        }
+        return $result;
+    }
+
+    #[Groups(['card_group:read'])]
+    #[SerializedName('cardRulings')]
+    public function getSerializedCardRulings(): array
+    {
+        $result = [];
+        foreach ($this->cardRulings as $ruling) {
+            $result[$ruling->getLocale() ?? 'en'][] = [
+                'question'    => $ruling->getQuestion(),
+                'answer'      => $ruling->getAnswer(),
+                'eventFormat' => $ruling->getEventFormat(),
+                'rulingDate'  => $ruling->getRulingDate()?->format(\DateTimeInterface::ATOM),
+            ];
+        }
+        return $result;
+    }
+
+    #[Groups(['card_group:read'])]
+    #[SerializedName('loreEntries')]
+    public function getSerializedLoreEntries(): array
+    {
+        $result = [];
+        foreach ($this->loreEntries as $entry) {
+            $result[$entry->getLocale()][] = [
+                'type'     => $entry->getType(),
+                'elements' => $entry->getElements(),
+            ];
+        }
+        return $result;
+    }
+
+    #[Groups(['card_group:read'])]
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->getUpdateDate();
+    }
+
+    // --- Getters / Setters ---
+
+    public function getId(): ?int { return $this->id; }
+
+    public function getSlug(): string { return $this->slug; }
+    public function setSlug(string $slug): self { $this->slug = $slug; return $this; }
+
+    public function getFaction(): ?Faction { return $this->faction; }
+    public function setFaction(?Faction $faction): self { $this->faction = $faction; return $this; }
+
+    public function getRarity(): ?Rarity { return $this->rarity; }
+    public function setRarity(?Rarity $rarity): self { $this->rarity = $rarity; return $this; }
+
+    public function getCardType(): ?CardType { return $this->cardType; }
+    public function setCardType(?CardType $cardType): self { $this->cardType = $cardType; return $this; }
+
+    public function getSubTypes(): Collection { return $this->subTypes; }
+    public function addSubType(CardSubType $subType): self
+    {
+        foreach ($this->subTypes as $existing) {
+            if ($existing->getReference() === $subType->getReference()) {
+                return $this;
+            }
+        }
+        $this->subTypes->add($subType);
+        return $this;
+    }
+
+    public function getMainCost(): ?int { return $this->mainCost; }
+    public function setMainCost(?int $mainCost): self { $this->mainCost = $mainCost; return $this; }
+
+    public function getRecallCost(): ?int { return $this->recallCost; }
+    public function setRecallCost(?int $recallCost): self { $this->recallCost = $recallCost; return $this; }
+
+    public function getOceanPower(): ?int { return $this->oceanPower; }
+    public function setOceanPower(?int $v): self { $this->oceanPower = $v; return $this; }
+
+    public function getMountainPower(): ?int { return $this->mountainPower; }
+    public function setMountainPower(?int $v): self { $this->mountainPower = $v; return $this; }
+
+    public function getForestPower(): ?int { return $this->forestPower; }
+    public function setForestPower(?int $v): self { $this->forestPower = $v; return $this; }
+
+    public function getEchoEffect(): ?string { return $this->echoEffect; }
+    public function setEchoEffect(?string $v): self { $this->echoEffect = $v; return $this; }
+
+    public function getPermanent(): ?string { return $this->permanent; }
+    public function setPermanent(?string $v): self { $this->permanent = $v; return $this; }
+
+    public function getEffect1(): ?MainEffect { return $this->effect1; }
+    public function setEffect1(?MainEffect $v): self { $this->effect1 = $v; return $this; }
+
+    public function getEffect2(): ?MainEffect { return $this->effect2; }
+    public function setEffect2(?MainEffect $v): self { $this->effect2 = $v; return $this; }
+
+    public function getEffect3(): ?MainEffect { return $this->effect3; }
+    public function setEffect3(?MainEffect $v): self { $this->effect3 = $v; return $this; }
+
+    public function getCardHistoryStatus(): ?CardHistoryStatus { return $this->cardHistoryStatus; }
+    public function setCardHistoryStatus(?CardHistoryStatus $v): self { $this->cardHistoryStatus = $v; return $this; }
+
+    public function isBanned(): bool { return $this->isBanned; }
+    public function setIsBanned(bool $v): self { $this->isBanned = $v; return $this; }
+
+    public function isErrated(): bool { return $this->isErrated; }
+    public function setIsErrated(bool $v): self { $this->isErrated = $v; return $this; }
+
+    public function isSuspended(): bool { return $this->isSuspended; }
+    public function setIsSuspended(bool $v): self { $this->isSuspended = $v; return $this; }
+
+    public function getCardRulings(): Collection { return $this->cardRulings; }
+    public function getLoreEntries(): Collection { return $this->loreEntries; }
+    public function getTranslations(): Collection { return $this->translations; }
+    public function getCards(): Collection { return $this->cards; }
+
+    public function getTranslation(string $locale): ?CardGroupTranslation
+    {
+        foreach ($this->translations as $t) {
+            if ($t->getLocale() === $locale) {
+                return $t;
+            }
+        }
+        return null;
+    }
+}

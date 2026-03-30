@@ -1,0 +1,123 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Effet #{{ effect.id }} — Admin{% endblock %}
+
+{% block content %}
+
+<div class="mb-4">
+    <a href="{{ path('admin_effects_index') }}" class="text-sm text-blue-600 hover:underline">← Retour à la liste</a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    {# ── Left: effet info ─────────────────────────────────────────────────── #}
+    <div class="lg:col-span-2 space-y-4">
+
+        {# Header card #}
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs text-gray-400 font-mono">#{{ effect.id }}</span>
+                {% if effect.abilityTrigger %}
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    {{ effect.abilityTrigger.textFr ?? effect.abilityTrigger.textEn ?? '—' }}
+                </span>
+                {% endif %}
+                {% for kw in effect.keywords ?? [] %}
+                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-teal-100 text-teal-800">
+                        {{ kw.k }}{% if kw.v is defined %} {{ kw.v }}{% endif %}
+                    </span>
+                {% endfor %}
+            </div>
+
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Textes</h2>
+            <dl class="space-y-2 mt-3">
+                {% for locale, text in {
+                    'FR': effect.textFr,
+                    'EN': effect.textEn,
+                    'DE': effect.textDe,
+                    'ES': effect.textEs,
+                    'IT': effect.textIt,
+                } %}
+                    {% if text %}
+                    <div class="flex gap-3">
+                        <dt class="text-xs font-bold text-gray-400 w-6 shrink-0 pt-0.5">{{ locale }}</dt>
+                        <dd class="text-sm text-gray-800 dark:text-gray-200">{{ text }}</dd>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </dl>
+
+            {% if effect.abilityCondition and effect.abilityCondition.textFr %}
+            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Condition</h2>
+                <div class="flex gap-3">
+                    <span class="text-xs font-bold text-gray-400 w-6 shrink-0 pt-0.5">FR</span>
+                    <span class="text-sm italic text-indigo-600 dark:text-indigo-400">{{ effect.abilityCondition.textFr }}</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Edit form #}
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Modifier</h3>
+            {{ form_start(editForm, {action: path('admin_effects_edit', {id: effect.id}), attr: {class: 'space-y-3'}}) }}
+                {% for field in ['textFr', 'textEn', 'textDe', 'textEs', 'textIt'] %}
+                <div>
+                    {{ form_label(attribute(editForm, field), null, {label_attr: {class: 'block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'}}) }}
+                    {{ form_widget(attribute(editForm, field), {attr: {class: 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white'}}) }}
+                </div>
+                {% endfor %}
+
+                <div class="flex gap-2 pt-2">
+                    <button type="submit"
+                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                        Sauvegarder
+                    </button>
+                    <button type="submit" name="reparse" value="1"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50">
+                        Re-parser
+                    </button>
+                </div>
+            {{ form_end(editForm) }}
+        </div>
+    </div>
+
+    {# ── Right: card references ───────────────────────────────────────────── #}
+    <div class="space-y-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                Cartes utilisant cet effet
+                <span class="ml-1 text-xs font-normal text-gray-400">({{ cardCount }})</span>
+            </h3>
+            {% if cardRefs is empty %}
+                <p class="text-sm text-gray-400">Aucune carte</p>
+            {% else %}
+                <ul class="space-y-1.5">
+                    {% for ref in cardRefs %}
+                        <li class="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1.5 flex items-center justify-between gap-2">
+                            <a href="/api/cards/reference/{{ ref }}"
+                               target="_blank"
+                               class="text-xs font-mono text-blue-600 dark:text-blue-400 hover:underline truncate">
+                                {{ ref }} ↗
+                            </a>
+                            <div class="flex gap-1 shrink-0">
+                                {% for locale, flag in {fr: '🇫🇷', en: '🇬🇧', de: '🇩🇪', es: '🇪🇸', it: '🇮🇹'} %}
+                                    <a href="https://altered-db.com/forge/standalone/card.php?card={{ ref }}&locale={{ locale }}"
+                                       target="_blank"
+                                       title="{{ locale|upper }}"
+                                       class="text-base leading-none hover:scale-125 transition-transform">{{ flag }}</a>
+                                {% endfor %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+                {% if cardCount > cardRefs|length %}
+                    <p class="text-xs text-gray-400 mt-2">+ {{ cardCount - cardRefs|length }} autres…</p>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

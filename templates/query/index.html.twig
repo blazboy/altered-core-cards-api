@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Query Builder — Altered Core</title>
+    <script>
+        // Apply saved theme before paint
+        if (localStorage.theme === 'light' || (!('theme' in localStorage) && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 antialiased text-sm">
+
+<nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 fixed w-full z-30 top-0">
+    <div class="px-4 py-3 lg:px-6 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="text-xl font-bold text-gray-900 dark:text-white">Altered Core</span>
+            <span class="text-gray-400">/</span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">Query Builder</span>
+        </div>
+        <button id="theme-toggle" class="p-2 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200" title="Basculer le thème">
+            <svg id="icon-sun" class="hidden w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+            </svg>
+            <svg id="icon-moon" class="hidden w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+        </button>
+    </div>
+</nav>
+
+<div class="pt-16 px-4 py-6 lg:px-8">
+<div class="flex gap-4 items-start">
+
+    {# ── Left: filters ────────────────────────────────────────────────────── #}
+    <div class="w-1/2 space-y-3" id="query-form">
+
+        {# Identité & Groupe #}
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Identité &amp; Groupe</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Référence</label>
+                    <input type="text" data-param="reference"
+                           class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5"
+                           placeholder="ALT_CORE_B_AX_04_C">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Set</label>
+                    <select data-param="set.reference"
+                            class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
+                        <option value="">— tous —</option>
+                        {% for set in sets %}
+                            <option value="{{ set.reference }}">{{ set.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Faction</label>
+                    <select data-param="faction.code"
+                            class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
+                        <option value="">— toutes —</option>
+                        {% for faction in factions %}
+                            <option value="{{ faction.code }}">{{ faction.name }} ({{ faction.code }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Rareté</label>
+                    <select data-param="rarity"
+                            class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
+                        <option value="">— toutes —</option>
+                        {% for rarity in rarities %}
+                            <option value="{{ rarity.reference }}">{{ rarity.name.fr ?? rarity.reference }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Type</label>
+                    <select data-param="cardType"
+                            class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
+                        <option value="">— tous —</option>
+                        {% for type in cardTypes %}
+                            <option value="{{ type.reference }}">{{ type.name.fr ?? type.reference }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Sous-type</label>
+                    <select data-param="subTypes"
+                            class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
+                        <option value="">— tous —</option>
+                        {% for sub in subTypes %}
+                            <option value="{{ sub.reference }}">{{ sub.name.fr ?? sub.reference }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Variation</label>
+                    <select data-param="variation"
+                            class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
+                        <option value="">— toutes —</option>
+                        <option value="standard">Standard</option>
+                        <option value="alt-art">Alt-art</option>
+                        <option value="promo">Promo</option>
+                        <option value="kickstarter">Kickstarter</option>
+                        <option value="serialized">Serialized</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        {# Coûts & Puissances #}
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Coûts &amp; Puissances</h3>
+            <div class="grid grid-cols-5 gap-2">
+                {% for label, param in {
+                    'Coût prin.':   'mainCost',
+                    'Coût rappel':  'recallCost',
+                    'Océan':        'oceanPower',
+                    'Montagne':     'mountainPower',
+                    'Forêt':        'forestPower',
+                } %}
+                <div>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ label }}</label>
+                    <input type="number" min="0" max="12" data-param="{{ param }}"
+                           class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5"
+                           placeholder="—">
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# Effets — slots #}
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Effets</h3>
+            <div class="space-y-3">
+
+                {# Effect slots builder #}
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs text-gray-600 dark:text-gray-400">Slots d'effet</label>
+                        <div class="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
+                            <label class="flex items-center gap-1 cursor-pointer">
+                                <input type="radio" name="effectSlotMode" value="or" checked class="accent-blue-600"> OU
+                            </label>
+                            <label class="flex items-center gap-1 cursor-pointer">
+                                <input type="radio" name="effectSlotMode" value="and" class="accent-blue-600"> ET
+                            </label>
+                        </div>
+                    </div>
+                    <div id="effect-slots" class="space-y-2"></div>
+                    <button type="button" id="slot-add"
+                            class="mt-2 w-full py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 rounded hover:bg-blue-50 dark:hover:bg-blue-950">
+                        + Ajouter un slot d'effet
+                    </button>
+                </div>
+
+                {# Présence d'effets #}
+                <div>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Présence d'effets</label>
+                    <select data-param="hasNoEffect"
+                            class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
+                        <option value="">— indifférent —</option>
+                        <option value="false">A au moins 1 effet</option>
+                        <option value="true">Sans aucun effet</option>
+                    </select>
+                </div>
+
+                {# Triggers identiques #}
+                <div>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Triggers identiques (min)</label>
+                    <select data-param="minSameTriggerCount"
+                            class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
+                        <option value="">— indifférent —</option>
+                        <option value="2">≥ 2 identiques</option>
+                        <option value="3">3 identiques (tous)</option>
+                    </select>
+                </div>
+
+                {# Keywords multi #}
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="text-xs text-gray-600 dark:text-gray-400">Keywords</label>
+                        <div class="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
+                            <label class="flex items-center gap-1 cursor-pointer">
+                                <input type="radio" name="kwMode" value="or" checked class="accent-blue-600"> OU
+                            </label>
+                            <label class="flex items-center gap-1 cursor-pointer">
+                                <input type="radio" name="kwMode" value="and" class="accent-blue-600"> ET
+                            </label>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="kw-input"
+                               class="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5 uppercase"
+                               placeholder="ex: CORIACE, FUGACE…">
+                        <button type="button" id="kw-add"
+                                class="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700">+</button>
+                    </div>
+                    <div id="kw-tags" class="flex flex-wrap gap-1 mt-2 min-h-[1.5rem]"></div>
+                </div>
+
+            </div>
+        </div>
+
+        {# Statut #}
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Statut</h3>
+            <div class="grid grid-cols-3 gap-2">
+                {% for label, param in {
+                    'Banni':       'isBanned',
+                    'Suspendu':    'isSuspended',
+                    'Erraté':      'isErrated',
+                    'Sérialisé':   'isSerialized',
+                    'Kickstarter': 'kickstarter',
+                    'Promo':       'promo',
+                } %}
+                <div>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ label }}</label>
+                    <select data-param="{{ param }}"
+                            class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
+                        <option value="">Indiff.</option>
+                        <option value="true">Oui</option>
+                        <option value="false">Non</option>
+                    </select>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# Pagination & Tri #}
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Pagination &amp; Tri</h3>
+            <div class="grid grid-cols-3 gap-2">
+                <div>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Page</label>
+                    <input type="number" min="1" data-param="page"
+                           class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Par page</label>
+                    <input type="number" min="1" max="100" data-param="itemsPerPage"
+                           class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5"
+                           placeholder="30">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Tri n°</label>
+                    <select data-param="order[cardNumber]"
+                            class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
+                        <option value="">—</option>
+                        <option value="asc">Croissant</option>
+                        <option value="desc">Décroissant</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {# ── Right: URL + results ─────────────────────────────────────────────── #}
+    <div class="w-1/2 sticky top-20 space-y-3">
+
+        {# URL preview #}
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">URL générée</span>
+                <div class="flex gap-3">
+                    <button id="btn-copy" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Copier</button>
+                    <a id="btn-open" href="/api/cards" target="_blank"
+                       class="text-xs text-gray-400 hover:text-gray-600">Ouvrir ↗</a>
+                </div>
+            </div>
+            <code id="url-preview"
+                  class="block text-xs text-gray-700 dark:text-gray-300 break-all font-mono bg-gray-50 dark:bg-gray-900 rounded p-2 whitespace-pre-wrap">/api/cards</code>
+        </div>
+
+        {# Actions #}
+        <div class="flex gap-2">
+            <button id="btn-run"
+                    class="flex-1 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                Rechercher
+            </button>
+            <button id="btn-reset"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600">
+                Reset
+            </button>
+        </div>
+
+        {# Results #}
+        <div id="results-box" class="hidden bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+
+            <div class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+                <span id="results-count" class="text-xs font-semibold text-gray-900 dark:text-white"></span>
+                <div class="flex items-center gap-1">
+                    <button id="view-list" title="Vue liste"
+                            class="view-btn p-1.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <button id="view-grid" title="Vue grille"
+                            class="view-btn p-1.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="results-loading" class="hidden text-sm text-gray-400 text-center py-6">Chargement…</div>
+            <div id="results-error" class="hidden text-sm text-red-500 px-3 py-2"></div>
+
+            {# List view #}
+            <div id="view-list-panel" class="overflow-x-auto">
+                <table class="w-full text-xs text-left">
+                    <thead id="results-head" class="hidden bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 uppercase">
+                        <tr>
+                            <th class="px-3 py-2">Référence</th>
+                            <th class="px-3 py-2">Nom (FR)</th>
+                            <th class="px-3 py-2">Faction</th>
+                            <th class="px-3 py-2">Rareté</th>
+                            <th class="px-3 py-2">Coût</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-list" class="divide-y divide-gray-100 dark:divide-gray-700"></tbody>
+                </table>
+            </div>
+
+            {# Grid view #}
+            <div id="view-grid-panel" class="hidden p-3">
+                <div id="results-grid" class="grid grid-cols-5 gap-3"></div>
+            </div>
+
+            {# Pagination #}
+            <div id="results-pagination" class="hidden flex items-center justify-between px-3 py-2 border-t border-gray-200 dark:border-gray-700">
+                <button id="page-prev"
+                        class="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                    ‹ Précédent
+                </button>
+                <span id="page-info" class="text-xs text-gray-500 dark:text-gray-400"></span>
+                <button id="page-next"
+                        class="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                    Suivant ›
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+</div>
+
+<script>
+(function () {
+    const BASE = '/api/cards';
+    let keywords    = [];
+    let effectSlots = [];   // [{trigger, condition, effect, effectLabel}]
+    let viewMode    = 'list';
+    let currentPage = 1;
+    let totalItems  = 0;
+    let perPage     = 30;
+
+    // ── Theme toggle ────────────────────────────────────────────────────────
+    const html      = document.documentElement;
+    const iconSun   = document.getElementById('icon-sun');
+    const iconMoon  = document.getElementById('icon-moon');
+
+    function applyTheme() {
+        const dark = html.classList.contains('dark');
+        iconSun.classList.toggle('hidden', !dark);
+        iconMoon.classList.toggle('hidden', dark);
+    }
+    applyTheme();
+
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+        html.classList.toggle('dark');
+        localStorage.theme = html.classList.contains('dark') ? 'dark' : 'light';
+        applyTheme();
+    });
+
+    // ── Trigger / condition data (server-rendered) ──────────────────────────
+    const TRIGGERS = [
+        {% for t in triggers %}
+        { id: {{ t.id }}, label: {{ (t.textFr ?? t.textEn ?? t.id ~ '')|json_encode|raw }} },
+        {% endfor %}
+    ];
+
+    const CONDITIONS = [
+        {% for c in conditions %}
+        { id: {{ c.id }}, label: {{ (c.textFr ?? c.textEn ?? c.id ~ '')|json_encode|raw }} },
+        {% endfor %}
+    ];
+
+    // ── Effect slot builder ─────────────────────────────────────────────────
+    function buildSelectHtml(items, placeholder) {
+        let html = `<option value="">${placeholder}</option>`;
+        items.forEach(({ id, label }) => {
+            const display = label ? label.substring(0, 60) : String(id);
+            html += `<option value="${id}">${display}</option>`;
+        });
+        return html;
+    }
+
+    const SEL = 'w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5';
+    const INP = 'flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5';
+
+    function renderEffectSlots() {
+        const container = document.getElementById('effect-slots');
+        container.innerHTML = '';
+
+        effectSlots.forEach((slot, idx) => {
+            const row = document.createElement('div');
+            row.className = 'relative flex gap-1.5 items-start p-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded';
+            row.dataset.idx = idx;
+
+            row.innerHTML = `
+                <div class="flex-1 space-y-1.5">
+                    <div class="flex gap-1.5">
+                        <select class="slot-trigger ${SEL}" data-idx="${idx}">
+                            ${buildSelectHtml(TRIGGERS, '— trigger —')}
+                        </select>
+                        <select class="slot-condition ${SEL}" data-idx="${idx}">
+                            ${buildSelectHtml(CONDITIONS, '— condition —')}
+                        </select>
+                    </div>
+                    <div class="relative flex gap-1.5 items-center">
+                        <input type="text" class="slot-effect-search ${INP}" data-idx="${idx}"
+                               placeholder="Rechercher un effet (min 2 car.)…" autocomplete="off">
+                        <button type="button" class="slot-effect-clear hidden text-xs text-gray-400 hover:text-red-500 px-1 shrink-0" data-idx="${idx}" title="Effacer">✕</button>
+                        <div class="slot-effect-results hidden absolute left-0 top-full mt-1 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded shadow-lg text-xs max-h-48 overflow-y-auto w-full" data-idx="${idx}"></div>
+                    </div>
+                </div>
+                <button type="button" class="slot-remove shrink-0 mt-1 text-gray-300 hover:text-red-500 text-sm font-bold leading-none" data-idx="${idx}" title="Supprimer">×</button>
+            `;
+
+            container.appendChild(row);
+
+            // Restore values
+            const triggerSel   = row.querySelector('.slot-trigger');
+            const conditionSel = row.querySelector('.slot-condition');
+            const searchInput  = row.querySelector('.slot-effect-search');
+            const clearBtn     = row.querySelector('.slot-effect-clear');
+
+            if (slot.trigger)   triggerSel.value   = slot.trigger;
+            if (slot.condition) conditionSel.value  = slot.condition;
+            if (slot.effect && slot.effectLabel) {
+                searchInput.value    = slot.effectLabel;
+                searchInput.readOnly = true;
+                clearBtn.classList.remove('hidden');
+            }
+
+            triggerSel.addEventListener('change', e => {
+                effectSlots[idx].trigger = e.target.value ? +e.target.value : '';
+                updatePreview();
+            });
+            conditionSel.addEventListener('change', e => {
+                effectSlots[idx].condition = e.target.value ? +e.target.value : '';
+                updatePreview();
+            });
+
+            bindEffectSearch(row, idx);
+
+            row.querySelector('.slot-remove').addEventListener('click', () => {
+                effectSlots.splice(idx, 1);
+                renderEffectSlots();
+                updatePreview();
+            });
+        });
+    }
+
+    function bindEffectSearch(row, idx) {
+        const searchInput = row.querySelector('.slot-effect-search');
+        const resultsDiv  = row.querySelector('.slot-effect-results');
+        const clearBtn    = row.querySelector('.slot-effect-clear');
+        let timer = null;
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(timer);
+            const q = searchInput.value.trim();
+            if (q.length < 2) { resultsDiv.classList.add('hidden'); return; }
+            timer = setTimeout(() => fetchEffects(q, resultsDiv, idx, searchInput, clearBtn), 250);
+        });
+
+        document.addEventListener('click', e => {
+            if (!row.contains(e.target)) resultsDiv.classList.add('hidden');
+        });
+
+        clearBtn.addEventListener('click', () => {
+            effectSlots[idx].effect      = '';
+            effectSlots[idx].effectLabel = '';
+            searchInput.value    = '';
+            searchInput.readOnly = false;
+            clearBtn.classList.add('hidden');
+            resultsDiv.innerHTML = '';
+            resultsDiv.classList.add('hidden');
+            updatePreview();
+        });
+    }
+
+    async function fetchEffects(q, resultsDiv, idx, searchInput, clearBtn) {
+        try {
+            const resp = await fetch(`/api/ability_effects?textFr=${encodeURIComponent(q)}&itemsPerPage=20`, {
+                headers: { Accept: 'application/json' }
+            });
+            const data  = await resp.json();
+            const items = data['hydra:member'] ?? [];
+
+            resultsDiv.innerHTML = '';
+            if (items.length === 0) {
+                resultsDiv.innerHTML = '<div class="px-3 py-2 text-gray-400">Aucun résultat</div>';
+            } else {
+                items.forEach(item => {
+                    const label = item.text?.fr ?? item.text?.en ?? String(item.id);
+                    const div   = document.createElement('div');
+                    div.className = 'px-3 py-2 hover:bg-blue-50 dark:hover:bg-blue-950 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0 text-gray-900 dark:text-gray-200';
+                    div.textContent = label.length > 100 ? label.substring(0, 100) + '…' : label;
+                    div.title = label;
+                    div.addEventListener('click', () => {
+                        const short = label.length > 70 ? label.substring(0, 70) + '…' : label;
+                        effectSlots[idx].effect      = item.id;
+                        effectSlots[idx].effectLabel = short;
+                        searchInput.value    = short;
+                        searchInput.readOnly = true;
+                        clearBtn.classList.remove('hidden');
+                        resultsDiv.classList.add('hidden');
+                        updatePreview();
+                    });
+                    resultsDiv.appendChild(div);
+                });
+            }
+            resultsDiv.classList.remove('hidden');
+        } catch (e) {
+            console.error('Effect search error', e);
+        }
+    }
+
+    document.getElementById('slot-add').addEventListener('click', () => {
+        effectSlots.push({ trigger: '', condition: '', effect: '', effectLabel: '' });
+        renderEffectSlots();
+        updatePreview();
+    });
+
+    document.querySelectorAll('input[name="effectSlotMode"]').forEach(r =>
+        r.addEventListener('change', updatePreview)
+    );
+
+    // ── URL builder ─────────────────────────────────────────────────────────
+    function buildParams(page) {
+        const params = new URLSearchParams();
+
+        document.querySelectorAll('.qb-input').forEach(el => {
+            const param = el.dataset.param;
+            if (param === 'page') return;
+            const val = el.value.trim();
+            if (val !== '') params.set(param, val);
+        });
+
+        // Effect slots
+        let slotIdx = 0;
+        effectSlots.forEach(slot => {
+            if (!slot.trigger && !slot.condition && !slot.effect) return;
+            if (slot.trigger)   params.set(`effectSlot[${slotIdx}][trigger]`,   slot.trigger);
+            if (slot.condition) params.set(`effectSlot[${slotIdx}][condition]`,  slot.condition);
+            if (slot.effect)    params.set(`effectSlot[${slotIdx}][effect]`,     slot.effect);
+            slotIdx++;
+        });
+        if (slotIdx > 1) {
+            const mode = document.querySelector('input[name="effectSlotMode"]:checked')?.value ?? 'or';
+            params.set('effectSlotMode', mode);
+        }
+
+        // Keywords
+        if (keywords.length > 0) {
+            keywords.forEach(kw => params.append('effectKeyword[]', kw));
+            if (keywords.length > 1) {
+                const mode = document.querySelector('input[name="kwMode"]:checked')?.value ?? 'or';
+                params.set('effectKeywordMode', mode);
+            }
+        }
+
+        const p = page ?? currentPage;
+        if (p > 1) params.set('page', p);
+        return params;
+    }
+
+    function buildUrl(page) {
+        const qs = buildParams(page).toString();
+        return qs ? BASE + '?' + decodeURIComponent(qs) : BASE;
+    }
+
+    function updatePreview() {
+        const url = buildUrl();
+        document.getElementById('url-preview').textContent = url;
+        document.getElementById('btn-open').href = url;
+    }
+
+    document.querySelectorAll('.qb-input').forEach(el => {
+        el.addEventListener('input', updatePreview);
+        el.addEventListener('change', updatePreview);
+    });
+
+    // ── Keywords ────────────────────────────────────────────────────────────
+    function renderTags() {
+        const container = document.getElementById('kw-tags');
+        container.innerHTML = '';
+        keywords.forEach((kw, i) => {
+            const chip = document.createElement('span');
+            chip.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300';
+            chip.innerHTML = `${kw} <button type="button" data-i="${i}" class="kw-remove text-teal-600 hover:text-red-600 font-bold">&times;</button>`;
+            container.appendChild(chip);
+        });
+        container.querySelectorAll('.kw-remove').forEach(btn => {
+            btn.addEventListener('click', () => {
+                keywords.splice(+btn.dataset.i, 1);
+                renderTags();
+            });
+        });
+        updatePreview();
+    }
+
+    function addKeyword(raw) {
+        raw.split(/[,\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean).forEach(kw => {
+            if (kw && !keywords.includes(kw)) keywords.push(kw);
+        });
+        document.getElementById('kw-input').value = '';
+        renderTags();
+    }
+
+    document.getElementById('kw-add').addEventListener('click', () =>
+        addKeyword(document.getElementById('kw-input').value)
+    );
+    document.getElementById('kw-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); addKeyword(e.target.value); }
+    });
+    document.querySelectorAll('input[name="kwMode"]').forEach(r =>
+        r.addEventListener('change', updatePreview)
+    );
+
+    // ── View mode ───────────────────────────────────────────────────────────
+    const FACTION_COLORS = {
+        BR: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+        AX: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+        LY: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+        MU: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+        OR: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+        YZ: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300',
+    };
+
+    function setViewMode(mode) {
+        viewMode = mode;
+        document.getElementById('view-list-panel').classList.toggle('hidden', mode !== 'list');
+        document.getElementById('view-grid-panel').classList.toggle('hidden', mode !== 'grid');
+        document.getElementById('view-list').classList.toggle('bg-gray-100', mode === 'list');
+        document.getElementById('view-list').classList.toggle('dark:bg-gray-700', mode === 'list');
+        document.getElementById('view-grid').classList.toggle('bg-gray-100', mode === 'grid');
+        document.getElementById('view-grid').classList.toggle('dark:bg-gray-700', mode === 'grid');
+    }
+    document.getElementById('view-list').addEventListener('click', () => setViewMode('list'));
+    document.getElementById('view-grid').addEventListener('click', () => setViewMode('grid'));
+
+    // ── Render ──────────────────────────────────────────────────────────────
+    function renderListRows(members) {
+        const head = document.getElementById('results-head');
+        const list = document.getElementById('results-list');
+        list.innerHTML = '';
+        if (members.length === 0) {
+            head.classList.add('hidden');
+            list.innerHTML = '<tr><td colspan="5" class="px-3 py-8 text-center text-gray-400">Aucun résultat</td></tr>';
+            return;
+        }
+        head.classList.remove('hidden');
+        members.forEach(card => {
+            const tr      = document.createElement('tr');
+            tr.className  = 'hover:bg-gray-50 dark:hover:bg-gray-700';
+            const ref     = card.reference ?? '—';
+            const name    = card.name?.fr ?? card.cardGroup?.name?.en ?? '—';
+            const faction = card.faction?.code ?? '—';
+            const rarity  = card.rarity?.reference ?? '—';
+            const cost    = card.mainCost ?? '—';
+            const fColor  = FACTION_COLORS[faction] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+            tr.innerHTML = `
+                <td class="px-3 py-2 font-mono text-gray-400 dark:text-gray-500 text-xs">${ref}</td>
+                <td class="px-3 py-2 text-gray-900 dark:text-white text-xs font-medium">${name}</td>
+                <td class="px-3 py-2"><span class="px-1.5 py-0.5 rounded text-xs font-semibold ${fColor}">${faction}</span></td>
+                <td class="px-3 py-2 text-gray-500 dark:text-gray-400 text-xs">${rarity}</td>
+                <td class="px-3 py-2 text-gray-400 dark:text-gray-500 text-xs text-center">${cost}</td>
+            `;
+            list.appendChild(tr);
+        });
+    }
+
+    function renderGridCards(members) {
+        const grid = document.getElementById('results-grid');
+        grid.innerHTML = '';
+        if (members.length === 0) {
+            grid.innerHTML = '<p class="col-span-5 text-center text-gray-400 py-8">Aucun résultat</p>';
+            return;
+        }
+        members.forEach(card => {
+            const ref     = card.reference ?? '—';
+            const name    = card.name?.fr ?? card.cardGroup?.name?.en ?? '—';
+            const faction = card.faction?.code ?? '—';
+            const rarity  = card.rarity?.reference ?? '—';
+            const cost    = card.mainCost ?? null;
+            const fColor  = FACTION_COLORS[faction] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+            const img     = card.imagePath?.fr ?? card.imagePath?.en ?? null;
+
+            const div = document.createElement('div');
+            div.className = 'rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800 flex flex-col';
+            div.innerHTML = `
+                ${img
+                    ? `<img src="${img}" alt="${name}" class="w-full aspect-[2/3] object-cover">`
+                    : `<div class="w-full aspect-[2/3] bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-300 dark:text-gray-600 text-xs">${ref}</div>`
+                }
+                <div class="p-2 flex flex-col gap-1">
+                    <p class="text-xs font-semibold text-gray-900 dark:text-white truncate" title="${name}">${name}</p>
+                    <p class="text-xs font-mono text-gray-400 dark:text-gray-500 truncate">${ref}</p>
+                    <div class="flex items-center justify-between mt-1">
+                        <span class="px-1.5 py-0.5 rounded text-xs font-semibold ${fColor}">${faction}</span>
+                        <span class="text-xs text-gray-400 dark:text-gray-500">${rarity}${cost !== null ? ' · ' + cost : ''}</span>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(div);
+        });
+    }
+
+    // ── Pagination ──────────────────────────────────────────────────────────
+    function updatePagination() {
+        const pag     = document.getElementById('results-pagination');
+        const info    = document.getElementById('page-info');
+        const prevBtn = document.getElementById('page-prev');
+        const nextBtn = document.getElementById('page-next');
+        const last    = Math.ceil(totalItems / perPage);
+        if (totalItems <= perPage) { pag.classList.add('hidden'); return; }
+        pag.classList.remove('hidden');
+        info.textContent = `Page ${currentPage} / ${last}`;
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= last;
+    }
+
+    async function fetchPage(page) {
+        currentPage = page;
+        updatePreview();
+
+        const qs       = buildParams(page).toString();
+        const fetchUrl = qs ? BASE + '?' + qs : BASE;
+        const loading  = document.getElementById('results-loading');
+        const error    = document.getElementById('results-error');
+        const count    = document.getElementById('results-count');
+
+        loading.classList.remove('hidden');
+        error.classList.add('hidden');
+        document.getElementById('results-list').innerHTML = '';
+        document.getElementById('results-grid').innerHTML = '';
+
+        try {
+            const resp = await fetch(fetchUrl, { headers: { Accept: 'application/json' } });
+            const data = await resp.json();
+
+            if (!resp.ok) {
+                error.classList.remove('hidden');
+                error.textContent = 'Erreur ' + resp.status + ' : ' + (data.detail ?? data['hydra:description'] ?? JSON.stringify(data));
+                return;
+            }
+
+            const members = data['member'] ?? (Array.isArray(data) ? data : []);
+            totalItems = data['totalItems'] ?? members.length;
+            perPage    = members.length || 30;
+
+            count.textContent = totalItems.toLocaleString('fr-FR') + ' résultat(s)';
+            renderListRows(members);
+            renderGridCards(members);
+            updatePagination();
+        } catch (e) {
+            error.classList.remove('hidden');
+            error.textContent = 'Erreur réseau : ' + e.message;
+        } finally {
+            loading.classList.add('hidden');
+        }
+    }
+
+    document.getElementById('page-prev').addEventListener('click', () => fetchPage(currentPage - 1));
+    document.getElementById('page-next').addEventListener('click', () => fetchPage(currentPage + 1));
+
+    // ── Copy / Reset / Run ──────────────────────────────────────────────────
+    document.getElementById('btn-copy').addEventListener('click', () => {
+        navigator.clipboard.writeText(buildUrl()).then(() => {
+            const btn = document.getElementById('btn-copy');
+            btn.textContent = 'Copié !';
+            setTimeout(() => btn.textContent = 'Copier', 1500);
+        });
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+        document.querySelectorAll('.qb-input').forEach(el => el.value = '');
+        document.querySelector('input[name="kwMode"][value="or"]').checked = true;
+        document.querySelector('input[name="effectSlotMode"][value="or"]').checked = true;
+        keywords    = [];
+        effectSlots = [];
+        currentPage = 1;
+        renderTags();
+        renderEffectSlots();
+        updatePreview();
+        document.getElementById('results-box').classList.add('hidden');
+    });
+
+    document.getElementById('btn-run').addEventListener('click', () => {
+        currentPage = 1;
+        document.getElementById('results-box').classList.remove('hidden');
+        fetchPage(1);
+    });
+
+    // Init
+    setViewMode('list');
+    updatePreview();
+})();
+</script>
+</body>
+</html>

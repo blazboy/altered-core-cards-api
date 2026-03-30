@@ -1,0 +1,159 @@
+<?php
+
+namespace App\Builder;
+
+use App\Entity\Card;
+use App\Entity\CardTranslation;
+use App\Entity\Rarity;
+use App\Repository\RarityRepository;
+use App\Repository\SetRepository;
+use DateTimeImmutable;
+
+class CardBuilder
+{
+    /** @var array<string, Rarity> */
+    private array $rarityCache = [];
+
+    public function __construct(
+        private readonly SetRepository     $setRepository,
+        private readonly RarityRepository  $rarityRepository,
+        private readonly CardGroupBuilder  $cardGroupBuilder,
+    ) {}
+
+    public function clearCache(): void
+    {
+        $this->rarityCache = [];
+        $this->cardGroupBuilder->clearCache();
+    }
+
+    public function build(Card $card, array $data, string $locale): Card
+    {
+        if ($card->getId()) {
+            $card->setUpdatedDate(new DateTimeImmutable());
+        }
+
+        // ── Find or create CardGroup and build gameplay fields ────────────────
+        $cardGroup = $this->cardGroupBuilder->findOrCreate($data);
+        $cardGroup = $this->cardGroupBuilder->build($cardGroup, $data, $locale);
+        $card->setCardGroup($cardGroup);
+
+        // ── Printing identity ─────────────────────────────────────────────────
+        $card->setAlteredId($data['id']);
+        $card->setReference($data['reference']);
+        $card->setKickstarter(array_key_exists('ks', $data) && $data['ks']);
+        $card->setIsSerialized((bool) ($data['isSerialized'] ?? false));
+        $card->setIsParentSerialized((bool) ($data['isParentSerialized'] ?? false));
+        $card->setIsOwnerless((bool) ($data['isOwnerless'] ?? false));
+
+        $variation = 'standard';
+        if (!empty($data['ks'])) $variation = 'kickstarter';
+        if (!empty($data['isSerialized'])) $variation = 'serialized';
+        $card->setVariation($variation);
+
+        if (array_key_exists('qrUrlDetail', $data)) {
+            $card->setQrUrlDetail($data['qrUrlDetail']);
+        }
+
+        if (!$card->getSet()) {
+            $dbSet = $this->setRepository->findOneByReference($data['cardSet']['reference'] ?? '');
+            if ($dbSet) {
+                $card->setSet($dbSet);
+            }
+        }
+
+        if (array_key_exists('rarity', $data) && isset($data['rarity']['reference'])) {
+            $card->setRarity($this->findOrCreateRarity($data['rarity'], $locale));
+        }
+
+        if ($locale === 'fr-fr') {
+            if (array_key_exists('imagePath', $data)) {
+                $card->setImgPath($data['imagePath']);
+            }
+            if (array_key_exists('collectorNumberFormatted', $data)) {
+                $cnf = $data['collectorNumberFormatted'];
+                $card->setCollectorNumberFormatedId($cnf);
+
+                if (isset($cnf[4]) && $cnf[4] === 'P') {
+                    $card->setPromo(true);
+                    $card->setVariation('promo');
+                }
+                if (isset($cnf[8]) && $cnf[8] === 'F') {
+                    $card->setTransfuge(true);
+                }
+
+                $card->setCardNumber((int) substr($cnf, 4, 3));
+            }
+            if (array_key_exists('allImagePath', $data)) {
+                $card->setAllImagePath($data['allImagePath']);
+            }
+            if (array_key_exists('assets', $data) && is_array($data['assets'])) {
+                $card->setAssets(array_values(array_merge(...array_values($data['assets']))));
+            }
+
+            // Transfuge detection: faction in reference differs from mainFaction
+            if (isset($data['mainFaction']['reference'])) {
+                $refParts    = explode('_', $data['reference'] ?? '');
+                $refFaction  = strtoupper($refParts[3] ?? '');
+                $mainFaction = strtoupper($data['mainFaction']['reference']);
+                if ($refFaction !== '' && $refFaction !== $mainFaction) {
+                    $card->setTransfuge(true);
+                }
+            }
+        }
+
+        $card = $this->buildTranslation($card, $data, $locale);
+
+        return $card;
+    }
+
+    private function buildTranslation(Card $card, array $data, string $locale): Card
+    {
+        $language        = explode('-', $locale)[0];
+        $cardTranslation = $card->getTranslation($language);
+
+        if (!$cardTranslation) {
+            $cardTranslation = new CardTranslation();
+            $cardTranslation->setLocale($language);
+            $cardTranslation->setCard($card);
+            $card->addTranslation($cardTranslation);
+        } else {
+            $cardTranslation->setUpdatedDate(new DateTimeImmutable());
+            $card->setUpdatedDate(new DateTimeImmutable());
+        }
+
+        if (array_key_exists('imagePath', $data)) {
+            $cardTranslation->setImgPath($data['imagePath']);
+        }
+        if (array_key_exists('name', $data)) {
+            $cardTranslation->setName($data['name']);
+        }
+        if (array_key_exists('collectorNumberFormatted', $data)) {
+            $cardTranslation->setCollectorNumberFormatedId($data['collectorNumberFormatted']);
+        }
+
+        return $card;
+    }
+
+    private function findOrCreateRarity(array $data, string $locale): Rarity
+    {
+        $reference = $data['reference'];
+
+        if (!isset($this->rarityCache[$reference])) {
+            $rarity = $this->rarityRepository->findOneByReference($reference);
+            if (!$rarity) {
+                $rarity = new Rarity();
+                $rarity->setReference($reference);
+            }
+            $this->rarityCache[$reference] = $rarity;
+        }
+
+        $rarity   = $this->rarityCache[$reference];
+        $language = explode('-', $locale)[0];
+        $setter   = 'setName' . ucfirst($language);
+        if (isset($data['name']) && method_exists($rarity, $setter)) {
+            $rarity->{$setter}($data['name']);
+        }
+
+        return $rarity;
+    }
+}

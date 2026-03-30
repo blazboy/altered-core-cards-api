@@ -1,0 +1,39 @@
+{% extends '@!ApiPlatform/SwaggerUi/index.html.twig' %}
+
+{% block stylesheet %}
+    {{ parent() }}
+    <style>
+        @media (prefers-color-scheme: dark) {
+            select,
+            input[type="text"],
+            input[type="password"],
+            input[type="search"],
+            textarea {
+                background-color: #2a2a2a !important;
+                color: #e0e0e0 !important;
+                border-color: #555 !important;
+            }
+
+            select option {
+                background-color: #2a2a2a;
+                color: #e0e0e0;
+            }
+
+            .swagger-ui .opblock-tag,
+            .swagger-ui .opblock .opblock-summary-description,
+            .swagger-ui table thead tr th,
+            .swagger-ui table thead tr td,
+            .swagger-ui .parameter__name,
+            .swagger-ui .parameter__type,
+            .swagger-ui label {
+                color: #e0e0e0 !important;
+            }
+
+            .swagger-ui input[disabled],
+            .swagger-ui select[disabled] {
+                background-color: #1a1a1a !important;
+                color: #999 !important;
+            }
+        }
+    </style>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% set typeLabel = type == 'trigger' ? 'Trigger' : (type == 'condition' ? 'Condition' : 'Effect') %}
+
+{% block title %}{{ typeLabel }} #{{ ability.alteredId }} — Admin{% endblock %}
+
+{% block content %}
+
+<div class="mb-4 flex items-center gap-2">
+    <a href="{{ path('admin_abilities_index', {type: type}) }}"
+       class="text-sm text-blue-600 hover:underline">← Retour aux {{ type == 'trigger' ? 'Triggers' : (type == 'condition' ? 'Conditions' : 'Effects') }}</a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    {# ── Left: form ───────────────────────────────────────────────────────── #}
+    <div class="lg:col-span-2 space-y-4">
+
+        {# Header #}
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <div class="flex items-center gap-3 mb-5">
+                <span class="text-xs font-mono text-gray-400">alteredId {{ ability.alteredId }}</span>
+                {% set typeColors = {
+                    trigger:   'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+                    condition: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
+                    effect:    'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300',
+                } %}
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ typeColors[type] ?? '' }}">
+                    {{ typeLabel }}
+                </span>
+                {% if ability.isSupport %}
+                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300">
+                        Support
+                    </span>
+                {% endif %}
+            </div>
+
+            {# Current translations overview #}
+            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Traductions actuelles</h2>
+            <dl class="space-y-2">
+                {% for locale, text in {
+                    'FR': ability.textFr,
+                    'EN': ability.textEn,
+                    'DE': ability.textDe,
+                    'ES': ability.textEs,
+                    'IT': ability.textIt,
+                } %}
+                <div class="flex gap-3">
+                    <dt class="text-xs font-bold text-gray-400 w-6 shrink-0 pt-0.5">{{ locale }}</dt>
+                    <dd class="text-sm {{ text ? 'text-gray-800 dark:text-gray-200' : 'text-gray-300 dark:text-gray-600 italic' }}">
+                        {{ text ?? 'non renseigné' }}
+                    </dd>
+                </div>
+                {% endfor %}
+            </dl>
+        </div>
+
+        {# Edit form #}
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Modifier</h3>
+
+            {{ form_start(form, {action: path('admin_abilities_update', {type: type, id: ability.id}), attr: {class: 'space-y-4'}}) }}
+
+                {% for field in ['textFr', 'textEn', 'textDe', 'textEs', 'textIt'] %}
+                <div>
+                    {{ form_label(attribute(form, field), null, {label_attr: {class: 'block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'}}) }}
+                    {{ form_widget(attribute(form, field), {attr: {class: 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white font-mono'}}) }}
+                </div>
+                {% endfor %}
+
+                <div class="flex items-center gap-3 pt-1">
+                    {{ form_widget(form.isSupport, {attr: {class: 'w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500'}}) }}
+                    {{ form_label(form.isSupport, null, {label_attr: {class: 'text-sm font-medium text-gray-700 dark:text-gray-300'}}) }}
+                </div>
+
+                <div class="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <button type="submit"
+                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300">
+                        Sauvegarder
+                    </button>
+                    <a href="{{ path('admin_abilities_index', {type: type}) }}"
+                       class="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                        Annuler
+                    </a>
+                </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    {# ── Right: meta ──────────────────────────────────────────────────────── #}
+    <div class="space-y-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Informations</h3>
+            <dl class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                    <dt class="text-gray-500 dark:text-gray-400">ID interne</dt>
+                    <dd class="font-mono text-gray-900 dark:text-white">{{ ability.id }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500 dark:text-gray-400">Altered ID</dt>
+                    <dd class="font-mono text-gray-900 dark:text-white">{{ ability.alteredId }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500 dark:text-gray-400">Type</dt>
+                    <dd class="font-medium text-gray-900 dark:text-white">{{ typeLabel }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500 dark:text-gray-400">Support</dt>
+                    <dd>
+                        {% if ability.isSupport %}
+                            <span class="text-amber-600 dark:text-amber-400 font-medium">Oui</span>
+                        {% else %}
+                            <span class="text-gray-400">Non</span>
+                        {% endif %}
+                    </dd>
+                </div>
+                <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <dt class="text-gray-500 dark:text-gray-400 mb-2">Langues renseignées</dt>
+                    <dd class="flex gap-2 flex-wrap">
+                        {% for locale, text in {FR: ability.textFr, EN: ability.textEn, DE: ability.textDe, ES: ability.textEs, IT: ability.textIt} %}
+                            <span class="px-2 py-0.5 text-xs rounded-full font-medium
+                                         {{ text ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500' }}">
+                                {{ locale }}
+                            </span>
+                        {% endfor %}
+                    </dd>
+                </div>
+            </dl>
+        </div>
+
+        {# Navigation entre entrées #}
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Navigation rapide</h3>
+            <div class="flex flex-col gap-2">
+                {% for tab in [{key: 'trigger', label: 'Triggers'}, {key: 'condition', label: 'Conditions'}, {key: 'effect', label: 'Effects'}] %}
+                    <a href="{{ path('admin_abilities_index', {type: tab.key}) }}"
+                       class="text-sm px-3 py-2 rounded-lg border
+                              {{ type == tab.key
+                                 ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400 font-medium'
+                                 : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700' }}">
+                        {{ tab.label }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

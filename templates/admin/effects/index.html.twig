@@ -1,0 +1,234 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Effets — Admin{% endblock %}
+
+{% block content %}
+
+{# ── Stats ───────────────────────────────────────────────────────────────── #}
+<div class="flex flex-wrap gap-2 mb-4">
+    {% for stat in stats %}
+        <a href="/api/cards?effectTriggerType={{ stat.trigger_id }}"
+           target="_blank"
+           title="{{ stat.trigger_text }}"
+           class="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-400 transition-colors group relative">
+            <span class="text-xs font-mono text-gray-600 dark:text-gray-300 truncate max-w-32">{{ stat.trigger_text ?? '—' }}</span>
+            <span class="text-xs font-bold text-gray-900 dark:text-white">{{ stat.nb|number_format(0, ',', ' ') }}</span>
+            <span class="pointer-events-none absolute bottom-full left-0 mb-1 hidden group-hover:block z-50 whitespace-pre-wrap max-w-xs rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-lg">{{ stat.trigger_text }}</span>
+        </a>
+    {% endfor %}
+</div>
+
+{# ── Keyword stats ────────────────────────────────────────────────────────── #}
+<div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6">
+    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Keywords extraits</h3>
+    <div class="flex flex-wrap gap-2">
+        {% for kw in keywordStats %}
+            <a href="/api/cards?effectKeyword={{ kw.keyword }}"
+               target="_blank"
+               class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300 hover:bg-teal-200 dark:hover:bg-teal-800 transition-colors"
+               title="/api/cards?effectKeyword={{ kw.keyword }}">
+                {{ kw.keyword }}
+                <span class="bg-teal-200 dark:bg-teal-800 text-teal-900 dark:text-teal-200 rounded-full px-1.5 py-0.5 text-xs font-bold">{{ kw.nb }}</span>
+            </a>
+        {% endfor %}
+    </div>
+</div>
+
+{# ── Filters ──────────────────────────────────────────────────────────────── #}
+{% set activeFilters = (filterForm.vars.data ?? {})|filter(v => v is not empty) %}
+<div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-4">
+    {{ form_start(filterForm, {attr: {class: 'flex flex-wrap gap-3 items-end'}}) }}
+        <div>
+            {{ form_label(filterForm.q, null, {label_attr: {class: 'block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'}}) }}
+            {{ form_widget(filterForm.q, {attr: {class: 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-64 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white'}}) }}
+        </div>
+        <div>
+            {{ form_label(filterForm.abilityTrigger, null, {label_attr: {class: 'block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'}}) }}
+            {{ form_widget(filterForm.abilityTrigger, {attr: {class: 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white'}}) }}
+        </div>
+        <div>
+            {{ form_label(filterForm.keyword, null, {label_attr: {class: 'block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'}}) }}
+            {{ form_widget(filterForm.keyword, {attr: {class: 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white'}}) }}
+        </div>
+        <div>
+            {{ form_label(filterForm.linked, null, {label_attr: {class: 'block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'}}) }}
+            {{ form_widget(filterForm.linked, {attr: {class: 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white'}}) }}
+        </div>
+        <div data-controller="autocomplete"
+             data-autocomplete-url-value="{{ path('admin_autocomplete_conditions') }}"
+             class="relative">
+            {{ form_label(filterForm.condition, null, {label_attr: {class: 'block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'}}) }}
+            {{ form_widget(filterForm.condition, {attr: {class: 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-64 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white'}}) }}
+            <div data-autocomplete-target="dropdown"
+                 class="hidden absolute z-20 mt-1 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden">
+                <ul data-autocomplete-target="list"></ul>
+            </div>
+        </div>
+        <button type="submit"
+                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300">
+            Filtrer
+        </button>
+        {% if activeFilters %}
+            <a href="{{ path('admin_effects_index') }}"
+               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50">
+                Réinitialiser
+            </a>
+        {% endif %}
+    {{ form_end(filterForm) }}
+</div>
+
+{# ── Table ────────────────────────────────────────────────────────────────── #}
+<div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+        <span class="text-sm text-gray-500 dark:text-gray-400">
+            <strong class="text-gray-900 dark:text-white">{{ total|number_format(0, ',', ' ') }}</strong> effet(s)
+        </span>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <tr>
+                    <th class="px-4 py-3 w-12">ID</th>
+                    <th class="px-4 py-3">Texte (FR)</th>
+                    <th class="px-4 py-3 w-36">
+                        {% set nextDir = (sort == 'ability_key' and dir == 'asc') ? 'desc' : 'asc' %}
+                        <a href="{{ path('admin_effects_index', app.request.query.all|merge({sort: 'ability_key', dir: nextDir, page: 1})) }}"
+                           class="inline-flex items-center gap-1 hover:text-blue-600 {{ sort == 'ability_key' ? 'text-blue-600' : '' }}">
+                            Ability key
+                            {% if sort == 'ability_key' %}
+                                <span>{{ dir == 'asc' ? '↑' : '↓' }}</span>
+                            {% else %}
+                                <span class="text-gray-300">↕</span>
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th class="px-4 py-3 w-48">Trigger</th>
+                    <th class="px-4 py-3 w-56">Condition</th>
+                    <th class="px-4 py-3 w-48">Keywords</th>
+                    <th class="px-4 py-3 w-16"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for effect in effects %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td class="px-4 py-3 font-mono text-xs text-gray-400">{{ effect.id }}</td>
+                    <td class="px-4 py-3 max-w-xl">
+                        <p class="truncate text-gray-900 dark:text-white" title="{{ effect.textFr }}">
+                            {{ effect.textFr|default('—') }}
+                        </p>
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if effect.abilityKey %}
+                            <span class="font-mono text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                {{ effect.abilityKey }}
+                            </span>
+                        {% else %}
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-400 dark:bg-red-950 dark:text-red-500">
+                                non lié
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if effect.abilityTrigger %}
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 truncate max-w-full block" title="{{ effect.abilityTrigger.textFr }}">
+                                {{ effect.abilityTrigger.textFr ?? '—' }}
+                            </span>
+                        {% else %}
+                            <span class="text-gray-300 dark:text-gray-600">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if effect.abilityCondition and effect.abilityCondition.textFr %}
+                            <p class="truncate text-sm italic text-indigo-600 dark:text-indigo-400" title="{{ effect.abilityCondition.textFr }}">
+                                {{ effect.abilityCondition.textFr }}
+                            </p>
+                        {% else %}
+                            <span class="text-gray-300 dark:text-gray-600">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if effect.keywords %}
+                            <div class="flex flex-wrap gap-1">
+                                {% for kw in effect.keywords %}
+                                    <span class="px-1.5 py-0.5 text-xs rounded bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300 font-medium">
+                                        {{ kw.k }}{% if kw.v is defined %} {{ kw.v }}{% endif %}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        <a href="{{ path('admin_effects_show', {id: effect.id}) }}"
+                           class="font-medium text-blue-600 dark:text-blue-500 hover:underline text-xs">Voir</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="px-4 py-8 text-center text-gray-400">Aucun résultat</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Pagination #}
+    {% if totalPages > 1 %}
+    <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Page <span class="text-blue-600 dark:text-blue-400">{{ page }}</span> sur {{ totalPages }}
+        </span>
+        <nav class="flex items-center gap-1">
+            {# Première page #}
+            {% if page > 1 %}
+                <a href="{{ path('admin_effects_index', app.request.query.all|merge({page: 1})) }}"
+                   class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 font-medium text-sm">
+                    «
+                </a>
+                <a href="{{ path('admin_effects_index', app.request.query.all|merge({page: page - 1})) }}"
+                   class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 font-medium text-sm">
+                    ‹
+                </a>
+            {% else %}
+                <span class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 text-sm cursor-not-allowed">«</span>
+                <span class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 text-sm cursor-not-allowed">‹</span>
+            {% endif %}
+
+            {# Pages numérotées #}
+            {% if page > 3 %}
+                <span class="flex items-center justify-center w-9 h-9 text-gray-400 text-sm">…</span>
+            {% endif %}
+            {% for p in max(1, page - 2)..min(totalPages, page + 2) %}
+                <a href="{{ path('admin_effects_index', app.request.query.all|merge({page: p})) }}"
+                   class="flex items-center justify-center w-9 h-9 rounded-lg border text-sm font-semibold
+                          {{ p == page
+                             ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                             : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600' }}">
+                    {{ p }}
+                </a>
+            {% endfor %}
+            {% if page < totalPages - 2 %}
+                <span class="flex items-center justify-center w-9 h-9 text-gray-400 text-sm">…</span>
+            {% endif %}
+
+            {# Dernière page #}
+            {% if page < totalPages %}
+                <a href="{{ path('admin_effects_index', app.request.query.all|merge({page: page + 1})) }}"
+                   class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 font-medium text-sm">
+                    ›
+                </a>
+                <a href="{{ path('admin_effects_index', app.request.query.all|merge({page: totalPages})) }}"
+                   class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 font-medium text-sm">
+                    »
+                </a>
+            {% else %}
+                <span class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 text-sm cursor-not-allowed">›</span>
+                <span class="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 text-sm cursor-not-allowed">»</span>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
