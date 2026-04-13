@@ -1,0 +1,108 @@
+nav:
+  admin: Admin
+  effects: Effects
+  abilities: Abilities
+  logout: Logout
+
+query:
+  title: Query Builder
+  section:
+    identity: "Identity & Group"
+    costs: "Costs & Powers"
+    effects: Effects
+    status: Status
+    pagination: "Pagination & Sort"
+  label:
+    name: Name
+    reference: Reference
+    set: Set
+    faction: Faction
+    rarity: Rarity
+    type: Type
+    subtype: Subtype
+    variation: Variation
+    main_cost: "Main cost"
+    recall_cost: "Recall cost"
+    ocean: Ocean
+    mountain: Mountain
+    forest: Forest
+    effect_slots: "Effect slots"
+    effect_presence: "Effect presence"
+    same_trigger: "Same triggers (min)"
+    keywords: Keywords
+    banned: Banned
+    suspended: Suspended
+    errated: Errated
+    serialized: Serialized
+    kickstarter: Kickstarter
+    promo: Promo
+    page: Page
+    per_page: Per page
+    sort_number: "Sort by #"
+  placeholder:
+    name_search: "Search a name…"
+    all_m: "— all —"
+    all_f: "— all —"
+    any: "— any —"
+  option:
+    indiff: "Any"
+    yes: "Yes"
+    no: "No"
+    asc: Ascending
+    desc: Descending
+    standard: Standard
+    at_least_1_effect: "Has at least 1 effect"
+    no_effect: "Has no effect"
+    min_2_same: "≥ 2 identical"
+    all_3_same: "3 identical (all)"
+    or: OR
+    and: AND
+  button:
+    add_slot: "+ Add effect slot"
+    search: Search
+    reset: Reset
+    copy: Copy
+    open: "Open ↗"
+    copied: "Copied!"
+  result:
+    url_label: "Generated URL"
+    col_ref: Reference
+    col_name: "Name"
+    col_faction: Faction
+    col_rarity: Rarity
+    col_cost: Cost
+    loading: "Loading…"
+    no_results: "No results"
+    results_count: "%count% result(s)"
+    error_network: "Network error: %msg%"
+    error_http: "Error %status%: %detail%"
+    effect_search_placeholder: "Search for an effect (min 2 chars)…"
+    prev: "‹ Previous"
+    next: "Next ›"
+    page_info: "Page %current% / %total%"
+    view_list: "List view"
+    view_grid: "Grid view"
+
+admin:
+  effects:
+    title: Effects
+    keywords_stats: "Extracted keywords"
+    filter_btn: Filter
+    reset_btn: Reset
+    count: "%count% effect(s)"
+    label: "effect(s)"
+    col_text_fr: "Text (FR)"
+    col_ability_key: "Ability key"
+    col_trigger: Trigger
+    col_condition: Condition
+    col_keywords: Keywords
+    no_linked: "unlinked"
+    no_results: "No results"
+    see: View
+  abilities:
+    search_label: Search
+    search_placeholder: "Text in any language…"
+    filter_btn: Filter
+    reset_btn: Reset
+  pagination:
+    page_of: "Page %page% of %total%"

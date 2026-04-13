@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr" class="dark">
+<html lang="{{ app.request.locale }}" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Query Builder — Altered Core</title>
+    <title>{{ 'query.title'|trans }} — Altered Core</title>
     <script>
         // Apply saved theme before paint
         if (localStorage.theme === 'light' || (!('theme' in localStorage) && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -12,6 +12,54 @@
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config = { darkMode: 'class' }</script>
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        /* Tom Select — light */
+        .ts-wrapper .ts-control {
+            background: rgb(249 250 251);
+            border: 1px solid rgb(209 213 219);
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.375rem;
+            min-height: unset;
+            font-size: 0.75rem;
+            box-shadow: none;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+        }
+        .ts-wrapper.focus .ts-control { border-color: rgb(96 165 250); box-shadow: none; }
+        .ts-wrapper .ts-control .item {
+            background: rgb(219 234 254);
+            color: rgb(29 78 216);
+            border: none;
+            border-radius: 9999px;
+            padding: 0 0.5rem;
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+        .ts-wrapper .ts-control input { font-size: 0.75rem; }
+        .ts-dropdown { font-size: 0.75rem; border-color: rgb(209 213 219); border-radius: 0.25rem; z-index: 9999; }
+        .ts-dropdown .option { padding: 0.375rem 0.5rem; }
+        .ts-dropdown .option.active { background: rgb(239 246 255); color: rgb(29 78 216); }
+        /* Tom Select — dark */
+        .dark .ts-wrapper .ts-control {
+            background: rgb(55 65 81);
+            border-color: rgb(75 85 99);
+            color: rgb(255 255 255);
+        }
+        .dark .ts-wrapper .ts-control .item {
+            background: rgb(30 58 138);
+            color: rgb(147 197 253);
+        }
+        .dark .ts-wrapper .ts-control input { color: rgb(255 255 255); }
+        .dark .ts-wrapper .ts-control input::placeholder { color: rgb(156 163 175); }
+        .dark .ts-dropdown {
+            background: rgb(31 41 55);
+            border-color: rgb(75 85 99);
+            color: rgb(209 213 219);
+        }
+        .dark .ts-dropdown .option.active { background: rgb(30 58 138); color: rgb(147 197 253); }
+        .ts-wrapper .ts-control .remove { color: inherit; opacity: 0.6; margin-left: 0.25rem; }
+    </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 antialiased text-sm">
 
@@ -20,9 +68,22 @@
         <div class="flex items-center gap-3">
             <span class="text-xl font-bold text-gray-900 dark:text-white">Altered Core</span>
             <span class="text-gray-400">/</span>
-            <span class="text-sm text-gray-500 dark:text-gray-400">Query Builder</span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">{{ 'query.title'|trans }}</span>
         </div>
-        <button id="theme-toggle" class="p-2 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200" title="Basculer le thème">
+        <div class="flex items-center gap-3">
+            {# Locale switcher #}
+            <div class="flex items-center gap-1 text-xs">
+                <a href="{{ path('switch_locale', {locale: 'fr'}) }}"
+                   class="px-1.5 py-0.5 rounded font-medium {{ app.request.locale == 'fr' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}">
+                    FR
+                </a>
+                <span class="text-gray-300 dark:text-gray-600">/</span>
+                <a href="{{ path('switch_locale', {locale: 'en'}) }}"
+                   class="px-1.5 py-0.5 rounded font-medium {{ app.request.locale == 'en' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}">
+                    EN
+                </a>
+            </div>
+            <button id="theme-toggle" class="p-2 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
             <svg id="icon-sun" class="hidden w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
             </svg>
@@ -30,6 +91,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
             </svg>
         </button>
+        </div>{# end flex items-center gap-3 #}
     </div>
 </nav>
 
@@ -41,70 +103,77 @@
 
         {# Identité & Groupe #}
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Identité &amp; Groupe</h3>
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{{ 'query.section.identity'|trans }}</h3>
             <div class="grid grid-cols-2 gap-2">
+                {# Name search — full width #}
+                <div class="col-span-2">
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ 'query.label.name'|trans }}</label>
+                    <input type="text" id="name-search"
+                           class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5"
+                           placeholder="{{ 'query.placeholder.name_search'|trans }}">
+                </div>
                 <div>
-                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Référence</label>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ 'query.label.reference'|trans }}</label>
                     <input type="text" data-param="reference"
                            class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5"
                            placeholder="ALT_CORE_B_AX_04_C">
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Set</label>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ 'query.label.set'|trans }}</label>
                     <select data-param="set.reference" multiple
                             class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
-                        <option value="">— tous —</option>
+                        <option value="">{{ 'query.placeholder.all_m'|trans }}</option>
                         {% for set in sets %}
                             <option value="{{ set.reference }}">{{ set.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Faction</label>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ 'query.label.faction'|trans }}</label>
                     <select data-param="faction.code" multiple
                             class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
-                        <option value="">— toutes —</option>
+                        <option value="">{{ 'query.placeholder.all_f'|trans }}</option>
                         {% for faction in factions %}
                             <option value="{{ faction.code }}">{{ faction.name }} ({{ faction.code }})</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Rareté</label>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ 'query.label.rarity'|trans }}</label>
                     <select data-param="rarity" multiple
                             class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
-                        <option value="">— toutes —</option>
+                        <option value="">{{ 'query.placeholder.all_f'|trans }}</option>
                         {% for rarity in rarities %}
                             <option value="{{ rarity.reference }}">{{ rarity.name.fr ?? rarity.reference }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Type</label>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ 'query.label.type'|trans }}</label>
                     <select data-param="cardType" multiple
                             class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
-                        <option value="">— tous —</option>
+                        <option value="">{{ 'query.placeholder.all_m'|trans }}</option>
                         {% for type in cardTypes %}
                             <option value="{{ type.reference }}">{{ type.name.fr ?? type.reference }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Sous-type</label>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ 'query.label.subtype'|trans }}</label>
                     <select data-param="subTypes" multiple
                             class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
-                        <option value="">— tous —</option>
+                        <option value="">{{ 'query.placeholder.all_m'|trans }}</option>
                         {% for sub in subTypes %}
                             <option value="{{ sub.reference }}">{{ sub.name.fr ?? sub.reference }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Variation</label>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ 'query.label.variation'|trans }}</label>
                     <select data-param="variation" multiple
                             class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
-                        <option value="">— toutes —</option>
-                        <option value="standard">Standard</option>
+                        <option value="">{{ 'query.placeholder.all_f'|trans }}</option>
+                        <option value="standard">{{ 'query.option.standard'|trans }}</option>
                         <option value="alt-art">Alt-art</option>
                         <option value="promo">Promo</option>
                         <option value="kickstarter">Kickstarter</option>
@@ -116,14 +185,14 @@
 
         {# Coûts & Puissances #}
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Coûts &amp; Puissances</h3>
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{{ 'query.section.costs'|trans }}</h3>
             <div class="grid grid-cols-5 gap-2">
                 {% for label, param in {
-                    'Coût prin.':   'mainCost',
-                    'Coût rappel':  'recallCost',
-                    'Océan':        'oceanPower',
-                    'Montagne':     'mountainPower',
-                    'Forêt':        'forestPower',
+                    ('query.label.main_cost'|trans):   'mainCost',
+                    ('query.label.recall_cost'|trans): 'recallCost',
+                    ('query.label.ocean'|trans):       'oceanPower',
+                    ('query.label.mountain'|trans):    'mountainPower',
+                    ('query.label.forest'|trans):      'forestPower',
                 } %}
                 <div>
                     <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ label }}</label>
@@ -137,61 +206,61 @@
 
         {# Effets — slots #}
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Effets</h3>
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{{ 'query.section.effects'|trans }}</h3>
             <div class="space-y-3">
 
                 {# Effect slots builder #}
                 <div>
                     <div class="flex items-center justify-between mb-2">
-                        <label class="text-xs text-gray-600 dark:text-gray-400">Slots d'effet</label>
+                        <label class="text-xs text-gray-600 dark:text-gray-400">{{ 'query.label.effect_slots'|trans }}</label>
                         <div class="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
                             <label class="flex items-center gap-1 cursor-pointer">
-                                <input type="radio" name="effectSlotMode" value="or" checked class="accent-blue-600"> OU
+                                <input type="radio" name="effectSlotMode" value="or" checked class="accent-blue-600"> {{ 'query.option.or'|trans }}
                             </label>
                             <label class="flex items-center gap-1 cursor-pointer">
-                                <input type="radio" name="effectSlotMode" value="and" class="accent-blue-600"> ET
+                                <input type="radio" name="effectSlotMode" value="and" class="accent-blue-600"> {{ 'query.option.and'|trans }}
                             </label>
                         </div>
                     </div>
                     <div id="effect-slots" class="space-y-2"></div>
                     <button type="button" id="slot-add"
                             class="mt-2 w-full py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 rounded hover:bg-blue-50 dark:hover:bg-blue-950">
-                        + Ajouter un slot d'effet
+                        {{ 'query.button.add_slot'|trans }}
                     </button>
                 </div>
 
                 {# Présence d'effets #}
                 <div>
-                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Présence d'effets</label>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ 'query.label.effect_presence'|trans }}</label>
                     <select data-param="hasNoEffect"
                             class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
-                        <option value="">— indifférent —</option>
-                        <option value="false">A au moins 1 effet</option>
-                        <option value="true">Sans aucun effet</option>
+                        <option value="">{{ 'query.placeholder.any'|trans }}</option>
+                        <option value="false">{{ 'query.option.at_least_1_effect'|trans }}</option>
+                        <option value="true">{{ 'query.option.no_effect'|trans }}</option>
                     </select>
                 </div>
 
                 {# Triggers identiques #}
                 <div>
-                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Triggers identiques (min)</label>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ 'query.label.same_trigger'|trans }}</label>
                     <select data-param="minSameTriggerCount"
                             class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
-                        <option value="">— indifférent —</option>
-                        <option value="2">≥ 2 identiques</option>
-                        <option value="3">3 identiques (tous)</option>
+                        <option value="">{{ 'query.placeholder.any'|trans }}</option>
+                        <option value="2">{{ 'query.option.min_2_same'|trans }}</option>
+                        <option value="3">{{ 'query.option.all_3_same'|trans }}</option>
                     </select>
                 </div>
 
                 {# Keywords multi #}
                 <div>
                     <div class="flex items-center justify-between mb-1">
-                        <label class="text-xs text-gray-600 dark:text-gray-400">Keywords</label>
+                        <label class="text-xs text-gray-600 dark:text-gray-400">{{ 'query.label.keywords'|trans }}</label>
                         <div class="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
                             <label class="flex items-center gap-1 cursor-pointer">
-                                <input type="radio" name="kwMode" value="or" checked class="accent-blue-600"> OU
+                                <input type="radio" name="kwMode" value="or" checked class="accent-blue-600"> {{ 'query.option.or'|trans }}
                             </label>
                             <label class="flex items-center gap-1 cursor-pointer">
-                                <input type="radio" name="kwMode" value="and" class="accent-blue-600"> ET
+                                <input type="radio" name="kwMode" value="and" class="accent-blue-600"> {{ 'query.option.and'|trans }}
                             </label>
                         </div>
                     </div>
@@ -210,23 +279,23 @@
 
         {# Statut #}
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Statut</h3>
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{{ 'query.section.status'|trans }}</h3>
             <div class="grid grid-cols-3 gap-2">
                 {% for label, param in {
-                    'Banni':       'isBanned',
-                    'Suspendu':    'isSuspended',
-                    'Erraté':      'isErrated',
-                    'Sérialisé':   'isSerialized',
-                    'Kickstarter': 'kickstarter',
-                    'Promo':       'promo',
+                    ('query.label.banned'|trans):      'isBanned',
+                    ('query.label.suspended'|trans):   'isSuspended',
+                    ('query.label.errated'|trans):     'isErrated',
+                    ('query.label.serialized'|trans):  'isSerialized',
+                    ('query.label.kickstarter'|trans): 'kickstarter',
+                    ('query.label.promo'|trans):       'promo',
                 } %}
                 <div>
                     <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ label }}</label>
                     <select data-param="{{ param }}"
                             class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
-                        <option value="">Indiff.</option>
-                        <option value="true">Oui</option>
-                        <option value="false">Non</option>
+                        <option value="">{{ 'query.option.indiff'|trans }}</option>
+                        <option value="true">{{ 'query.option.yes'|trans }}</option>
+                        <option value="false">{{ 'query.option.no'|trans }}</option>
                     </select>
                 </div>
                 {% endfor %}
@@ -235,26 +304,26 @@
 
         {# Pagination & Tri #}
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Pagination &amp; Tri</h3>
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{{ 'query.section.pagination'|trans }}</h3>
             <div class="grid grid-cols-3 gap-2">
                 <div>
-                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Page</label>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ 'query.label.page'|trans }}</label>
                     <input type="number" min="1" data-param="page"
                            class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Par page</label>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ 'query.label.per_page'|trans }}</label>
                     <input type="number" min="1" max="100" data-param="itemsPerPage"
                            class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5"
                            placeholder="30">
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Tri n°</label>
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ 'query.label.sort_number'|trans }}</label>
                     <select data-param="order[cardNumber]"
                             class="qb-input w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5">
                         <option value="">—</option>
-                        <option value="asc">Croissant</option>
-                        <option value="desc">Décroissant</option>
+                        <option value="asc">{{ 'query.option.asc'|trans }}</option>
+                        <option value="desc">{{ 'query.option.desc'|trans }}</option>
                     </select>
                 </div>
             </div>
@@ -268,11 +337,11 @@
         {# URL preview #}
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">URL générée</span>
+                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">{{ 'query.result.url_label'|trans }}</span>
                 <div class="flex gap-3">
-                    <button id="btn-copy" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Copier</button>
+                    <button id="btn-copy" class="text-xs text-blue-600 hover:text-blue-800 font-medium">{{ 'query.button.copy'|trans }}</button>
                     <a id="btn-open" href="/api/cards" target="_blank"
-                       class="text-xs text-gray-400 hover:text-gray-600">Ouvrir ↗</a>
+                       class="text-xs text-gray-400 hover:text-gray-600">{{ 'query.button.open'|trans }}</a>
                 </div>
             </div>
             <code id="url-preview"
@@ -283,11 +352,11 @@
         <div class="flex gap-2">
             <button id="btn-run"
                     class="flex-1 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-                Rechercher
+                {{ 'query.button.search'|trans }}
             </button>
             <button id="btn-reset"
                     class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600">
-                Reset
+                {{ 'query.button.reset'|trans }}
             </button>
         </div>
 
@@ -297,13 +366,13 @@
             <div class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700">
                 <span id="results-count" class="text-xs font-semibold text-gray-900 dark:text-white"></span>
                 <div class="flex items-center gap-1">
-                    <button id="view-list" title="Vue liste"
+                    <button id="view-list" title="{{ 'query.result.view_list'|trans }}"
                             class="view-btn p-1.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                         </svg>
                     </button>
-                    <button id="view-grid" title="Vue grille"
+                    <button id="view-grid" title="{{ 'query.result.view_grid'|trans }}"
                             class="view-btn p-1.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
@@ -312,7 +381,7 @@
                 </div>
             </div>
 
-            <div id="results-loading" class="hidden text-sm text-gray-400 text-center py-6">Chargement…</div>
+            <div id="results-loading" class="hidden text-sm text-gray-400 text-center py-6">{{ 'query.result.loading'|trans }}</div>
             <div id="results-error" class="hidden text-sm text-red-500 px-3 py-2"></div>
 
             {# List view #}
@@ -320,11 +389,11 @@
                 <table class="w-full text-xs text-left">
                     <thead id="results-head" class="hidden bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 uppercase">
                         <tr>
-                            <th class="px-3 py-2">Référence</th>
-                            <th class="px-3 py-2">Nom (FR)</th>
-                            <th class="px-3 py-2">Faction</th>
-                            <th class="px-3 py-2">Rareté</th>
-                            <th class="px-3 py-2">Coût</th>
+                            <th class="px-3 py-2">{{ 'query.result.col_ref'|trans }}</th>
+                            <th class="px-3 py-2">{{ 'query.result.col_name'|trans }}</th>
+                            <th class="px-3 py-2">{{ 'query.result.col_faction'|trans }}</th>
+                            <th class="px-3 py-2">{{ 'query.result.col_rarity'|trans }}</th>
+                            <th class="px-3 py-2">{{ 'query.result.col_cost'|trans }}</th>
                         </tr>
                     </thead>
                     <tbody id="results-list" class="divide-y divide-gray-100 dark:divide-gray-700"></tbody>
@@ -340,12 +409,12 @@
             <div id="results-pagination" class="hidden flex items-center justify-between px-3 py-2 border-t border-gray-200 dark:border-gray-700">
                 <button id="page-prev"
                         class="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
-                    ‹ Précédent
+                    {{ 'query.result.prev'|trans }}
                 </button>
                 <span id="page-info" class="text-xs text-gray-500 dark:text-gray-400"></span>
                 <button id="page-next"
                         class="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
-                    Suivant ›
+                    {{ 'query.result.next'|trans }}
                 </button>
             </div>
 
@@ -355,15 +424,49 @@
 </div>
 </div>
 
+{# Lightbox modal — must be in DOM before the script block runs #}
+<div id="lightbox"
+     class="fixed inset-0 z-50 hidden bg-black/85 flex items-center justify-center p-4">
+    <img id="lightbox-img" src="" alt=""
+         class="max-w-full max-h-full object-contain rounded shadow-2xl select-none">
+    <button id="lightbox-close"
+            class="absolute top-4 right-4 text-white/70 hover:text-white text-3xl leading-none">&times;</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2/dist/js/tom-select.complete.min.js"></script>
 <script>
 (function () {
     const BASE = '/api/cards';
+
+    // Server-side translations injected by Twig
+    // ── Display locale (from session, set via nav FR/EN switcher) ───────────
+    const displayLocale = '{{ app.request.locale }}';
+
+    function cardName(card) {
+        const langs = displayLocale === 'en'
+            ? [card.name?.en, card.name?.fr]
+            : [card.name?.fr, card.name?.en];
+        return langs.find(v => v) ?? '—';
+    }
+
+    const T = {
+        no_results:           {{ 'query.result.no_results'|trans|json_encode(constant('JSON_HEX_TAG'))|raw }},
+        loading:              {{ 'query.result.loading'|trans|json_encode(constant('JSON_HEX_TAG'))|raw }},
+        copied:               {{ 'query.button.copied'|trans|json_encode(constant('JSON_HEX_TAG'))|raw }},
+        copy:                 {{ 'query.button.copy'|trans|json_encode(constant('JSON_HEX_TAG'))|raw }},
+        results_count:        {{ 'query.result.results_count'|trans|json_encode(constant('JSON_HEX_TAG'))|raw }},
+        error_network:        {{ 'query.result.error_network'|trans|json_encode(constant('JSON_HEX_TAG'))|raw }},
+        error_http:           {{ 'query.result.error_http'|trans|json_encode(constant('JSON_HEX_TAG'))|raw }},
+        effect_search_ph:     {{ 'query.result.effect_search_placeholder'|trans|json_encode(constant('JSON_HEX_TAG'))|raw }},
+        page_info:            {{ 'query.result.page_info'|trans|json_encode(constant('JSON_HEX_TAG'))|raw }},
+    };
     let keywords    = [];
     let effectSlots = [];   // [{trigger, condition, effect, effectLabel}]
     let viewMode    = 'list';
     let currentPage = 1;
     let totalItems  = 0;
     let perPage     = 30;
+    let lastMembers = [];
 
     // ── Theme toggle ────────────────────────────────────────────────────────
     const html      = document.documentElement;
@@ -386,13 +489,13 @@
     // ── Trigger / condition data (server-rendered) ──────────────────────────
     const TRIGGERS = [
         {% for t in triggers %}
-        { id: {{ t.id }}, label: {{ (t.textFr ?? t.textEn ?? t.id ~ '')|json_encode|raw }} },
+        { id: {{ t.id }}, label: {{ (t.textFr ?? t.textEn ?? t.id ~ '')|json_encode(constant('JSON_HEX_TAG'))|raw }} },
         {% endfor %}
     ];
 
     const CONDITIONS = [
         {% for c in conditions %}
-        { id: {{ c.id }}, label: {{ (c.textFr ?? c.textEn ?? c.id ~ '')|json_encode|raw }} },
+        { id: {{ c.id }}, label: {{ (c.textFr ?? c.textEn ?? c.id ~ '')|json_encode(constant('JSON_HEX_TAG'))|raw }} },
         {% endfor %}
     ];
 
@@ -430,7 +533,7 @@
                     </div>
                     <div class="relative flex gap-1.5 items-center">
                         <input type="text" class="slot-effect-search ${INP}" data-idx="${idx}"
-                               placeholder="Rechercher un effet (min 2 car.)…" autocomplete="off">
+                               placeholder="${T.effect_search_ph}" autocomplete="off">
                         <button type="button" class="slot-effect-clear hidden text-xs text-gray-400 hover:text-red-500 px-1 shrink-0" data-idx="${idx}" title="Effacer">✕</button>
                         <div class="slot-effect-results hidden absolute left-0 top-full mt-1 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded shadow-lg text-xs max-h-48 overflow-y-auto w-full" data-idx="${idx}"></div>
                     </div>
@@ -504,7 +607,8 @@
 
     async function fetchEffects(q, resultsDiv, idx, searchInput, clearBtn) {
         try {
-            const resp = await fetch(`/api/ability_effects?textFr=${encodeURIComponent(q)}&itemsPerPage=20`, {
+            const langParam = displayLocale === 'en' ? 'textEn' : 'textFr';
+            const resp = await fetch(`/api/ability_effects?${langParam}=${encodeURIComponent(q)}&itemsPerPage=20`, {
                 headers: { Accept: 'application/json' }
             });
             const data  = await resp.json();
@@ -512,10 +616,10 @@
 
             resultsDiv.innerHTML = '';
             if (items.length === 0) {
-                resultsDiv.innerHTML = '<div class="px-3 py-2 text-gray-400">Aucun résultat</div>';
+                resultsDiv.innerHTML = `<div class="px-3 py-2 text-gray-400">${T.no_results}</div>`;
             } else {
                 items.forEach(item => {
-                    const label = item.text?.fr ?? item.text?.en ?? String(item.id);
+                    const label = (displayLocale === 'en' ? item.text?.en : item.text?.fr) ?? item.text?.fr ?? item.text?.en ?? String(item.id);
                     const div   = document.createElement('div');
                     div.className = 'px-3 py-2 hover:bg-blue-50 dark:hover:bg-blue-950 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0 text-gray-900 dark:text-gray-200';
                     div.textContent = label.length > 100 ? label.substring(0, 100) + '…' : label;
@@ -553,18 +657,21 @@
     function buildParams(page) {
         const params = new URLSearchParams();
 
+        // Name search (uses session locale)
+        const nameVal = (document.getElementById('name-search')?.value ?? '').trim();
+        if (nameVal) params.set(`name[${displayLocale}]`, nameVal);
+
         document.querySelectorAll('.qb-input').forEach(el => {
             const param = el.dataset.param;
-            if (param === 'page') return;
-            const val = el.value.trim();
-            if (val !== '') 
-            {
-                if (el.multiple) {
-                    console.warn('multiple')
-                    let values = Array.from(el.querySelectorAll('option:checked')).map(option => option.value)
-                    values.forEach(opt => params.append(param+"[]", opt))
-                }
-                else params.set(param, val);
+            if (!param || param === 'page') return;
+            if (el.multiple) {
+                Array.from(el.querySelectorAll('option:checked'))
+                    .map(o => o.value)
+                    .filter(Boolean)
+                    .forEach(v => params.append(param + '[]', v));
+            } else {
+                const val = (el.value ?? '').trim();
+                if (val !== '') params.set(param, val);
             }
         });
 
@@ -678,7 +785,7 @@
         list.innerHTML = '';
         if (members.length === 0) {
             head.classList.add('hidden');
-            list.innerHTML = '<tr><td colspan="5" class="px-3 py-8 text-center text-gray-400">Aucun résultat</td></tr>';
+            list.innerHTML = `<tr><td colspan="5" class="px-3 py-8 text-center text-gray-400">${T.no_results}</td></tr>`;
             return;
         }
         head.classList.remove('hidden');
@@ -686,7 +793,7 @@
             const tr      = document.createElement('tr');
             tr.className  = 'hover:bg-gray-50 dark:hover:bg-gray-700';
             const ref     = card.reference ?? '—';
-            const name    = card.name?.fr ?? card.cardGroup?.name?.en ?? '—';
+            const name    = cardName(card);
             const faction = card.faction?.code ?? '—';
             const rarity  = card.rarity?.reference ?? '—';
             const cost    = card.mainCost ?? '—';
@@ -706,12 +813,12 @@
         const grid = document.getElementById('results-grid');
         grid.innerHTML = '';
         if (members.length === 0) {
-            grid.innerHTML = '<p class="col-span-5 text-center text-gray-400 py-8">Aucun résultat</p>';
+            grid.innerHTML = `<p class="col-span-5 text-center text-gray-400 py-8">${T.no_results}</p>`;
             return;
         }
         members.forEach(card => {
             const ref     = card.reference ?? '—';
-            const name    = card.name?.fr ?? card.cardGroup?.name?.en ?? '—';
+            const name    = cardName(card);
             const faction = card.faction?.code ?? '—';
             const rarity  = card.rarity?.reference ?? '—';
             const cost    = card.mainCost ?? null;
@@ -722,8 +829,8 @@
             div.className = 'rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800 flex flex-col';
             div.innerHTML = `
                 ${img
-                    ? `<img src="${img}" alt="${name}" class="w-full aspect-[2/3] object-cover">`
-                    : `<div class="w-full aspect-[2/3] bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-300 dark:text-gray-600 text-xs">${ref}</div>`
+                    ? `<img src="${img}" alt="" class="w-full block cursor-zoom-in" data-lightbox="1">`
+                    : `<div class="w-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-300 dark:text-gray-600 text-xs" style="height:160px">${ref}</div>`
                 }
                 <div class="p-2 flex flex-col gap-1">
                     <p class="text-xs font-semibold text-gray-900 dark:text-white truncate" title="${name}">${name}</p>
@@ -735,6 +842,11 @@
                 </div>
             `;
             grid.appendChild(div);
+            if (img) {
+                const imgEl = div.querySelector('[data-lightbox]');
+                imgEl.dataset.src  = img;
+                imgEl.dataset.name = name;
+            }
         });
     }
 
@@ -747,7 +859,7 @@
         const last    = Math.ceil(totalItems / perPage);
         if (totalItems <= perPage) { pag.classList.add('hidden'); return; }
         pag.classList.remove('hidden');
-        info.textContent = `Page ${currentPage} / ${last}`;
+        info.textContent = T.page_info.replace('%current%', currentPage).replace('%total%', last);
         prevBtn.disabled = currentPage <= 1;
         nextBtn.disabled = currentPage >= last;
     }
@@ -773,21 +885,21 @@
 
             if (!resp.ok) {
                 error.classList.remove('hidden');
-                error.textContent = 'Erreur ' + resp.status + ' : ' + (data.detail ?? data['hydra:description'] ?? JSON.stringify(data));
+                error.textContent = T.error_http.replace('%status%', resp.status).replace('%detail%', data.detail ?? data['hydra:description'] ?? JSON.stringify(data));
                 return;
             }
 
-            const members = data['member'] ?? (Array.isArray(data) ? data : []);
-            totalItems = data['totalItems'] ?? members.length;
-            perPage    = members.length || 30;
+            lastMembers = data['member'] ?? (Array.isArray(data) ? data : []);
+            totalItems  = data['totalItems'] ?? lastMembers.length;
+            perPage     = lastMembers.length || 30;
 
-            count.textContent = totalItems.toLocaleString('fr-FR') + ' résultat(s)';
-            renderListRows(members);
-            renderGridCards(members);
+            count.textContent = T.results_count.replace('%count%', totalItems.toLocaleString());
+            renderListRows(lastMembers);
+            renderGridCards(lastMembers);
             updatePagination();
         } catch (e) {
             error.classList.remove('hidden');
-            error.textContent = 'Erreur réseau : ' + e.message;
+            error.textContent = T.error_network.replace('%msg%', e.message);
         } finally {
             loading.classList.add('hidden');
         }
@@ -800,17 +912,40 @@
     document.getElementById('btn-copy').addEventListener('click', () => {
         navigator.clipboard.writeText(buildUrl()).then(() => {
             const btn = document.getElementById('btn-copy');
-            btn.textContent = 'Copié !';
-            setTimeout(() => btn.textContent = 'Copier', 1500);
+            btn.textContent = T.copied;
+            setTimeout(() => btn.textContent = T.copy, 1500);
         });
     });
 
+    // ── Tom Select on multi-selects ─────────────────────────────────────────
+    const tomSelects = [];
+    document.querySelectorAll('select[data-param][multiple]').forEach(el => {
+        const emptyOpt  = el.querySelector('option[value=""]');
+        const placeholder = emptyOpt?.textContent.trim() ?? '—';
+        emptyOpt?.remove();
+
+        const ts = new TomSelect(el, {
+            plugins: ['remove_button'],
+            placeholder,
+            maxOptions: null,
+            onItemAdd()    { updatePreview(); },
+            onItemRemove() { updatePreview(); },
+        });
+        tomSelects.push(ts);
+    });
+
     document.getElementById('btn-reset').addEventListener('click', () => {
-        document.querySelectorAll('.qb-input').forEach(el => el.value = '');
+        // Reset plain inputs
+        document.querySelectorAll('.qb-input:not([multiple])').forEach(el => el.value = '');
+        const nameEl = document.getElementById('name-search');
+        if (nameEl) nameEl.value = '';
+        // Reset Tom Select instances
+        tomSelects.forEach(ts => ts.clear(true));
         document.querySelector('input[name="kwMode"][value="or"]').checked = true;
         document.querySelector('input[name="effectSlotMode"][value="or"]').checked = true;
         keywords    = [];
         effectSlots = [];
+        lastMembers = [];
         currentPage = 1;
         renderTags();
         renderEffectSlots();
@@ -824,9 +959,40 @@
         fetchPage(1);
     });
 
+    // ── Name search ─────────────────────────────────────────────────────────
+    document.getElementById('name-search').addEventListener('input', updatePreview);
+
     // Init
     setViewMode('list');
     updatePreview();
+})();
+
+// ── Lightbox ─────────────────────────────────────────────────────────────────
+(function () {
+    const lb    = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lightbox-img');
+
+    function open(src, alt) {
+        lbImg.src = src;
+        lbImg.alt = alt;
+        lb.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    function close() {
+        lb.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    // Event delegation — works even after grid re-render
+    document.getElementById('results-grid').addEventListener('click', e => {
+        const img = e.target.closest('[data-lightbox]');
+        if (img) open(img.dataset.src, img.dataset.name);
+    });
+
+    lb.addEventListener('click', close);
+    document.getElementById('lightbox-img').addEventListener('click', e => e.stopPropagation());
+    document.getElementById('lightbox-close').addEventListener('click', close);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 })();
 </script>
 </body>

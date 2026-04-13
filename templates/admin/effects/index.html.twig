@@ -20,7 +20,7 @@
 
 {# ── Keyword stats ────────────────────────────────────────────────────────── #}
 <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6">
-    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Keywords extraits</h3>
+    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{{ 'admin.effects.keywords_stats'|trans }}</h3>
     <div class="flex flex-wrap gap-2">
         {% for kw in keywordStats %}
             <a href="/api/cards?effectKeyword={{ kw.keyword }}"
@@ -66,12 +66,12 @@
         </div>
         <button type="submit"
                 class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300">
-            Filtrer
+            {{ 'admin.effects.filter_btn'|trans }}
         </button>
         {% if activeFilters %}
             <a href="{{ path('admin_effects_index') }}"
                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50">
-                Réinitialiser
+                {{ 'admin.effects.reset_btn'|trans }}
             </a>
         {% endif %}
     {{ form_end(filterForm) }}
@@ -81,7 +81,7 @@
 <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
     <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
         <span class="text-sm text-gray-500 dark:text-gray-400">
-            <strong class="text-gray-900 dark:text-white">{{ total|number_format(0, ',', ' ') }}</strong> effet(s)
+            <strong class="text-gray-900 dark:text-white">{{ total|number_format(0, ',', ' ') }}</strong> {{ 'admin.effects.label'|trans }}
         </span>
     </div>
 
@@ -90,12 +90,12 @@
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
                     <th class="px-4 py-3 w-12">ID</th>
-                    <th class="px-4 py-3">Texte (FR)</th>
+                    <th class="px-4 py-3">{{ 'admin.effects.col_text_fr'|trans }}</th>
                     <th class="px-4 py-3 w-36">
                         {% set nextDir = (sort == 'ability_key' and dir == 'asc') ? 'desc' : 'asc' %}
                         <a href="{{ path('admin_effects_index', app.request.query.all|merge({sort: 'ability_key', dir: nextDir, page: 1})) }}"
                            class="inline-flex items-center gap-1 hover:text-blue-600 {{ sort == 'ability_key' ? 'text-blue-600' : '' }}">
-                            Ability key
+                            {{ 'admin.effects.col_ability_key'|trans }}
                             {% if sort == 'ability_key' %}
                                 <span>{{ dir == 'asc' ? '↑' : '↓' }}</span>
                             {% else %}
@@ -103,9 +103,9 @@
                             {% endif %}
                         </a>
                     </th>
-                    <th class="px-4 py-3 w-48">Trigger</th>
-                    <th class="px-4 py-3 w-56">Condition</th>
-                    <th class="px-4 py-3 w-48">Keywords</th>
+                    <th class="px-4 py-3 w-48">{{ 'admin.effects.col_trigger'|trans }}</th>
+                    <th class="px-4 py-3 w-56">{{ 'admin.effects.col_condition'|trans }}</th>
+                    <th class="px-4 py-3 w-48">{{ 'admin.effects.col_keywords'|trans }}</th>
                     <th class="px-4 py-3 w-16"></th>
                 </tr>
             </thead>
@@ -125,7 +125,7 @@
                             </span>
                         {% else %}
                             <span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-400 dark:bg-red-950 dark:text-red-500">
-                                non lié
+                                {{ 'admin.effects.no_linked'|trans }}
                             </span>
                         {% endif %}
                     </td>
@@ -160,12 +160,12 @@
                     </td>
                     <td class="px-4 py-3 text-right">
                         <a href="{{ path('admin_effects_show', {id: effect.id}) }}"
-                           class="font-medium text-blue-600 dark:text-blue-500 hover:underline text-xs">Voir</a>
+                           class="font-medium text-blue-600 dark:text-blue-500 hover:underline text-xs">{{ 'admin.effects.see'|trans }}</a>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" class="px-4 py-8 text-center text-gray-400">Aucun résultat</td>
+                    <td colspan="7" class="px-4 py-8 text-center text-gray-400">{{ 'admin.effects.no_results'|trans }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -176,7 +176,7 @@
     {% if totalPages > 1 %}
     <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Page <span class="text-blue-600 dark:text-blue-400">{{ page }}</span> sur {{ totalPages }}
+            {{ 'admin.pagination.page_of'|trans({'%page%': page, '%total%': totalPages}) }}
         </span>
         <nav class="flex items-center gap-1">
             {# Première page #}
