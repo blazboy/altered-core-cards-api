@@ -6,6 +6,7 @@ use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use App\Debug\FilterProfiler;
+use App\Entity\CardGroupTranslation;
 use App\Search\SearchBackendInterface;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -88,6 +89,7 @@ final class CardNameFilter extends AbstractFilter
             return;
         }
 
+        // Use EXISTS subqueries to avoid JOIN WITH conditions on EAGER associations.
         $orParts = [];
         foreach ($value as $locale => $search) {
             $search = trim((string) $search);
@@ -97,12 +99,18 @@ final class CardNameFilter extends AbstractFilter
             $pLoc   = $queryNameGenerator->generateParameterName('name_locale');
             $pName  = $queryNameGenerator->generateParameterName('name_search');
 
-            $queryBuilder
-                ->leftJoin("$cgAlias.translations", $tAlias, 'WITH', "$tAlias.locale = :$pLoc")
-                ->setParameter($pLoc, $locale);
+            $subDql = sprintf(
+                'SELECT 1 FROM %s %s WHERE %s.cardGroup = %s AND %s.locale = :%s AND LOWER(%s.name) LIKE :%s',
+                CardGroupTranslation::class, $tAlias,
+                $tAlias, $cgAlias,
+                $tAlias, $pLoc,
+                $tAlias, $pName,
+            );
 
-            $orParts[] = $queryBuilder->expr()->like("LOWER($tAlias.name)", ":$pName");
-            $queryBuilder->setParameter($pName, '%' . mb_strtolower($search) . '%');
+            $orParts[] = $queryBuilder->expr()->exists($subDql);
+            $queryBuilder
+                ->setParameter($pLoc, $locale)
+                ->setParameter($pName, '%' . mb_strtolower($search) . '%');
         }
 
         if (!empty($orParts)) {
