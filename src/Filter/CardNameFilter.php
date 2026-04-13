@@ -5,16 +5,30 @@ namespace App\Filter;
 use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
+use App\Search\SearchBackendInterface;
 use Doctrine\ORM\QueryBuilder;
+use Symfony\Contracts\Service\Attribute\Required;
 
 /**
- * Partial name search on Card via cardGroup.translations.
+ * Name search with pluggable backend (Meilisearch, …) + PostgreSQL LIKE fallback.
  *
- * Accepted query param: name[fr]=foo  or  name[en]=foo
- * Multiple locales can be passed at once (OR between them).
+ * name=foo          → full-text across all locales
+ * name[fr]=foo      → full-text on French name/effects only
+ * name[en]=foo      → full-text on English name/effects only
+ *
+ * If the backend returns null (unavailable / NullSearchBackend), falls back
+ * to a PostgreSQL LIKE query on cardGroup.translations.name.
  */
 final class CardNameFilter extends AbstractFilter
 {
+    private SearchBackendInterface $searchBackend;
+
+    #[Required]
+    public function setSearchBackend(SearchBackendInterface $searchBackend): void
+    {
+        $this->searchBackend = $searchBackend;
+    }
+
     protected function filterProperty(
         string $property,
         mixed $value,
@@ -28,15 +42,31 @@ final class CardNameFilter extends AbstractFilter
             return;
         }
 
-        $root    = $queryBuilder->getRootAliases()[0];
-        $cgAlias = $this->getOrJoinCardGroup($queryBuilder, $root);
+        $root = $queryBuilder->getRootAliases()[0];
 
-        // name=foo  →  search across all locales (no locale restriction)
-        if (is_string($value)) {
-            $search = trim($value);
-            if ($search === '') {
+        // ── Search backend fast path ─────────────────────────────────────────
+        $ids = $this->resolveWithBackend($value);
+
+        if ($ids !== null) {
+            if (empty($ids)) {
+                $queryBuilder->andWhere('1 = 0');
                 return;
             }
+
+            $p = $queryNameGenerator->generateParameterName('search_ids');
+            $queryBuilder
+                ->andWhere("$root.id IN (:$p)")
+                ->setParameter($p, $ids);
+
+            return;
+        }
+
+        // ── PostgreSQL LIKE fallback ─────────────────────────────────────────
+        $cgAlias = $this->getOrJoinCardGroup($queryBuilder, $root);
+
+        if (is_string($value)) {
+            $search = trim($value);
+            if ($search === '') return;
             $tAlias = $queryNameGenerator->generateJoinAlias('cgt');
             $pName  = $queryNameGenerator->generateParameterName('name_search');
             $queryBuilder
@@ -46,14 +76,10 @@ final class CardNameFilter extends AbstractFilter
             return;
         }
 
-        // name[fr]=foo  or  name[en]=foo  →  locale-specific search (OR between locales)
         $orParts = [];
-
         foreach ($value as $locale => $search) {
             $search = trim((string) $search);
-            if ($search === '') {
-                continue;
-            }
+            if ($search === '') continue;
 
             $tAlias = $queryNameGenerator->generateJoinAlias('cgt');
             $pLoc   = $queryNameGenerator->generateParameterName('name_locale');
@@ -67,11 +93,40 @@ final class CardNameFilter extends AbstractFilter
             $queryBuilder->setParameter($pName, '%' . mb_strtolower($search) . '%');
         }
 
-        if (empty($orParts)) {
-            return;
+        if (!empty($orParts)) {
+            $queryBuilder->andWhere($queryBuilder->expr()->orX(...$orParts));
+        }
+    }
+
+    /**
+     * Ask the backend for matching IDs.
+     * Returns null if the backend is unavailable (triggers LIKE fallback).
+     *
+     * @return int[]|null
+     */
+    private function resolveWithBackend(string|array $value): ?array
+    {
+        if (is_string($value)) {
+            return $this->searchBackend->searchCardIds(trim($value));
         }
 
-        $queryBuilder->andWhere($queryBuilder->expr()->orX(...$orParts));
+        // locale-specific search — OR between locales
+        $allIds = null;
+        foreach ($value as $locale => $search) {
+            $search = trim((string) $search);
+            if ($search === '') continue;
+
+            $ids = $this->searchBackend->searchCardIds($search, ["name_{$locale} EXISTS"]);
+            if ($ids === null) {
+                return null; // backend unavailable, trigger fallback
+            }
+
+            $allIds = $allIds === null
+                ? $ids
+                : array_values(array_unique(array_merge($allIds, $ids)));
+        }
+
+        return $allIds;
     }
 
     private function getOrJoinCardGroup(QueryBuilder $qb, string $root): string
@@ -90,10 +145,10 @@ final class CardNameFilter extends AbstractFilter
     {
         return [
             'name' => [
-                'property' => 'name',
-                'type'     => 'string',
-                'required' => false,
-                'description' => 'Search in all locales',
+                'property'    => 'name',
+                'type'        => 'string',
+                'required'    => false,
+                'description' => 'Full-text search across all locales (Meilisearch)',
             ],
             'name[fr]' => [
                 'property' => 'name',

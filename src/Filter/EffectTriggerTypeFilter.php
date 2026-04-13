@@ -16,6 +16,7 @@ use Doctrine\ORM\QueryBuilder;
  */
 final class EffectTriggerTypeFilter extends AbstractFilter
 {
+    use CardSearchInClauseTrait;
     protected function filterProperty(
         string $property,
         mixed $value,
@@ -42,9 +43,7 @@ final class EffectTriggerTypeFilter extends AbstractFilter
             ) ?: [0];
 
             $root = $queryBuilder->getRootAliases()[0];
-            $queryBuilder
-                ->andWhere("$root.id IN (:cs_tt_ids)")
-                ->setParameter('cs_tt_ids', $ids);
+            $this->applyIdInClause($queryBuilder, $root, $ids);
 
             return;
         }
