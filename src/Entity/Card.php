@@ -161,7 +161,7 @@ class Card implements TimestampInterface
     #[ORM\ManyToOne(targetEntity: Card::class)]
     private ?Card $parentCard = null;
 
-    #[ORM\OneToMany(targetEntity: CardTranslation::class, mappedBy: 'card', cascade: ['persist'])]
+    #[ORM\OneToMany(targetEntity: CardTranslation::class, mappedBy: 'card', cascade: ['persist'], fetch: 'EAGER')]
     private Collection $translations;
 
     #[Gedmo\Locale]

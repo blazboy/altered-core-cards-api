@@ -405,6 +405,27 @@
                 <div id="results-grid" class="grid grid-cols-5 gap-3"></div>
             </div>
 
+            {% if app.debug %}
+            {# Debug panel — dev only #}
+            <div id="debug-panel" class="hidden border-t border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-950/30 px-3 py-2">
+                <div class="flex items-center gap-2 mb-1.5">
+                    <span class="text-xs font-bold text-yellow-700 dark:text-yellow-400 uppercase tracking-wide">Debug</span>
+                    <span id="debug-total" class="text-xs text-yellow-600 dark:text-yellow-500"></span>
+                </div>
+                <table class="w-full text-xs text-left">
+                    <thead>
+                        <tr class="text-yellow-600 dark:text-yellow-500">
+                            <th class="pr-4 font-medium">Filter</th>
+                            <th class="pr-4 font-medium">Path</th>
+                            <th class="pr-4 font-medium">Duration</th>
+                            <th class="font-medium">IDs pre-selected</th>
+                        </tr>
+                    </thead>
+                    <tbody id="debug-rows" class="text-yellow-800 dark:text-yellow-300"></tbody>
+                </table>
+            </div>
+            {% endif %}
+
             {# Pagination #}
             <div id="results-pagination" class="hidden flex items-center justify-between px-3 py-2 border-t border-gray-200 dark:border-gray-700">
                 <button id="page-prev"
@@ -897,6 +918,7 @@
             renderListRows(lastMembers);
             renderGridCards(lastMembers);
             updatePagination();
+            renderDebugPanel(resp);
         } catch (e) {
             error.classList.remove('hidden');
             error.textContent = T.error_network.replace('%msg%', e.message);
@@ -963,6 +985,74 @@
     document.getElementById('name-search').addEventListener('input', updatePreview);
 
     // Init
+    // ── Debug panel ─────────────────────────────────────────────────────────
+    function renderDebugPanel(resp) {
+        const panel = document.getElementById('debug-panel');
+        if (!panel) return; // not in dev
+
+        const filtersHeader  = resp.headers.get('X-Debug-Filters');
+        const totalHeader    = resp.headers.get('X-Debug-Total-Ms');
+        const sqlMsHeader    = resp.headers.get('X-Debug-Sql-Ms');
+        const sqlCountHeader = resp.headers.get('X-Debug-Sql-Count');
+
+        if (!filtersHeader) {
+            panel.classList.add('hidden');
+            return;
+        }
+
+        document.getElementById('debug-total').textContent = `Total: ${totalHeader}ms`;
+
+        const rows = document.getElementById('debug-rows');
+        rows.innerHTML = '';
+
+        filtersHeader.split(',').forEach(part => {
+            const [filter, path, duration, ids] = part.split(':');
+            const isFallback   = ids === '?';
+            const isMeili      = path.includes('Meilisearch') || path === 'meilisearch';
+            const pathLabel    = isMeili
+                ? (isFallback ? '⚠ meilisearch → fallback LIKE' : '✓ meilisearch')
+                : path.includes('Null') ? 'like (fallback)' : path;
+            const idsLabel     = isFallback ? '— (fallback)' : Number(ids).toLocaleString();
+            const durationMs   = parseInt(duration);
+            const durationLabel = duration.replace('ms', '');
+
+            const durationClass = durationMs > 1000
+                ? 'text-red-600 dark:text-red-400 font-bold'
+                : durationMs > 50
+                    ? 'text-red-600 dark:text-red-400 font-semibold'
+                    : durationMs > 15
+                        ? 'text-orange-500 dark:text-orange-400'
+                        : 'text-green-600 dark:text-green-400';
+
+            rows.insertAdjacentHTML('beforeend', `
+                <tr class="border-t border-yellow-200 dark:border-yellow-800">
+                    <td class="pr-4 py-0.5 font-mono">${filter}</td>
+                    <td class="pr-4 py-0.5">${pathLabel}</td>
+                    <td class="pr-4 py-0.5 ${durationClass}">${durationLabel}ms</td>
+                    <td class="py-0.5 text-gray-500 dark:text-gray-400">${idsLabel}</td>
+                </tr>
+            `);
+        });
+
+        // SQL row
+        if (sqlMsHeader) {
+            const sqlMs = parseFloat(sqlMsHeader);
+            const sqlClass = sqlMs > 500 ? 'text-red-600 dark:text-red-400 font-bold'
+                : sqlMs > 100 ? 'text-orange-500 dark:text-orange-400'
+                : 'text-green-600 dark:text-green-400';
+            rows.insertAdjacentHTML('beforeend', `
+                <tr class="border-t border-yellow-200 dark:border-yellow-800">
+                    <td class="pr-4 py-0.5 font-mono">SQL</td>
+                    <td class="pr-4 py-0.5 text-gray-400">${sqlCountHeader} quer${sqlCountHeader === '1' ? 'y' : 'ies'}</td>
+                    <td class="pr-4 py-0.5 ${sqlClass}">${sqlMs}ms</td>
+                    <td class="py-0.5 text-gray-400">—</td>
+                </tr>
+            `);
+        }
+
+        panel.classList.remove('hidden');
+    }
+
     setViewMode('list');
     updatePreview();
 })();

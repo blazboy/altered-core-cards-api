@@ -11,7 +11,8 @@ namespace App\Search;
 interface SearchBackendInterface
 {
     /**
+     * @param string[] $attributesToSearchOn  Restrict search to specific fields (empty = all)
      * @return int[]|null  null = backend unavailable, use fallback
      */
-    public function searchCardIds(string $query, array $filters = []): ?array;
+    public function searchCardIds(string $query, array $attributesToSearchOn = []): ?array;
 }

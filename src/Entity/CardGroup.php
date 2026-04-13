@@ -157,7 +157,7 @@ class CardGroup implements TimestampInterface
     #[ORM\OneToMany(targetEntity: LoreEntry::class, mappedBy: 'cardGroup', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $loreEntries;
 
-    #[ORM\OneToMany(targetEntity: CardGroupTranslation::class, mappedBy: 'cardGroup', cascade: ['persist'])]
+    #[ORM\OneToMany(targetEntity: CardGroupTranslation::class, mappedBy: 'cardGroup', cascade: ['persist'], fetch: 'EAGER')]
     private Collection $translations;
 
     #[ORM\OneToMany(targetEntity: Card::class, mappedBy: 'cardGroup')]

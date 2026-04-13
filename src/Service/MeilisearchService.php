@@ -102,18 +102,18 @@ final class MeilisearchService
     /**
      * Search and return matching card IDs.
      *
-     * @param array<string, mixed> $filters  Meilisearch filter expressions
+     * @param string[] $attributesToSearchOn  Restrict search to specific fields (e.g. locale-specific)
      * @return int[]
      */
-    public function searchIds(string $query = '', array $filters = [], int $limit = 10000): array
+    public function searchIds(string $query = '', array $attributesToSearchOn = [], int $limit = 10000): array
     {
         $params = [
-            'limit'  => $limit,
+            'limit'                => $limit,
             'attributesToRetrieve' => ['id'],
         ];
 
-        if (!empty($filters)) {
-            $params['filter'] = $filters;
+        if (!empty($attributesToSearchOn)) {
+            $params['attributesToSearchOn'] = $attributesToSearchOn;
         }
 
         $results = $this->getIndex()->search($query ?: null, $params);

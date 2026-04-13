@@ -22,14 +22,25 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
+    App\Debug\DbalProfilingMiddleware:
+        tags:
+            - { name: doctrine.middleware }
+
     App\Serializer\CardNormalizer:
         tags:
             - { name: serializer.normalizer, priority: 20 }
 
+    app.http_client.meilisearch:
+        class: Symfony\Component\HttpClient\HttpClient
+        factory: ['Symfony\Component\HttpClient\HttpClient', 'create']
+        arguments:
+            - { timeout: 2.0, max_duration: 5.0 }
+
     App\Service\MeilisearchService:
         arguments:
-            $url:    '%env(MEILISEARCH_URL)%'
-            $apiKey: '%env(MEILISEARCH_KEY)%'
+            $httpClient: '@app.http_client.meilisearch'
+            $url:        '%env(MEILISEARCH_URL)%'
+            $apiKey:     '%env(MEILISEARCH_KEY)%'
 
     # Swap this alias to use a different search backend (or NullSearchBackend to disable).
     # NullSearchBackend → CardNameFilter falls back to PostgreSQL LIKE automatically.

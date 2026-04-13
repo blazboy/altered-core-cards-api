@@ -5,6 +5,7 @@ namespace App\Filter;
 use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
+use App\Debug\FilterProfiler;
 use App\Search\SearchBackendInterface;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -22,11 +23,18 @@ use Symfony\Contracts\Service\Attribute\Required;
 final class CardNameFilter extends AbstractFilter
 {
     private SearchBackendInterface $searchBackend;
+    private ?FilterProfiler $profiler = null;
 
     #[Required]
     public function setSearchBackend(SearchBackendInterface $searchBackend): void
     {
         $this->searchBackend = $searchBackend;
+    }
+
+    #[Required]
+    public function setProfiler(FilterProfiler $profiler): void
+    {
+        $this->profiler = $profiler;
     }
 
     protected function filterProperty(
@@ -45,9 +53,11 @@ final class CardNameFilter extends AbstractFilter
         $root = $queryBuilder->getRootAliases()[0];
 
         // ── Search backend fast path ─────────────────────────────────────────
+        $this->profiler?->start('name', $this->searchBackend::class);
         $ids = $this->resolveWithBackend($value);
 
         if ($ids !== null) {
+            $this->profiler?->stop('name', count($ids));
             if (empty($ids)) {
                 $queryBuilder->andWhere('1 = 0');
                 return;
@@ -60,6 +70,8 @@ final class CardNameFilter extends AbstractFilter
 
             return;
         }
+
+        $this->profiler?->stop('name', null);
 
         // ── PostgreSQL LIKE fallback ─────────────────────────────────────────
         $cgAlias = $this->getOrJoinCardGroup($queryBuilder, $root);
@@ -116,7 +128,11 @@ final class CardNameFilter extends AbstractFilter
             $search = trim((string) $search);
             if ($search === '') continue;
 
-            $ids = $this->searchBackend->searchCardIds($search, ["name_{$locale} EXISTS"]);
+            $ids = $this->searchBackend->searchCardIds($search, [
+                "name_{$locale}",
+                "main_effect_{$locale}",
+                "echo_effect_{$locale}",
+            ]);
             if ($ids === null) {
                 return null; // backend unavailable, trigger fallback
             }

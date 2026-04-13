@@ -2,11 +2,13 @@
 
 namespace App\Filter;
 
+use App\Debug\FilterProfiler;
 use App\Entity\Card;
 use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\QueryBuilder;
+use Symfony\Contracts\Service\Attribute\Required;
 
 /**
  * Filters by ability_trigger id across any of the three effect slots.
@@ -17,6 +19,15 @@ use Doctrine\ORM\QueryBuilder;
 final class EffectTriggerTypeFilter extends AbstractFilter
 {
     use CardSearchInClauseTrait;
+
+    private ?FilterProfiler $profiler = null;
+
+    #[Required]
+    public function setProfiler(FilterProfiler $profiler): void
+    {
+        $this->profiler = $profiler;
+    }
+
     protected function filterProperty(
         string $property,
         mixed $value,
@@ -36,6 +47,7 @@ final class EffectTriggerTypeFilter extends AbstractFilter
         }
 
         if ($resourceClass === Card::class) {
+            $this->profiler?->start('trigger', 'card_search');
             $conn = $this->managerRegistry->getManager()->getConnection();
             $ids  = $conn->fetchFirstColumn(
                 'SELECT card_id FROM card_search WHERE t1 = :tid OR t2 = :tid OR t3 = :tid',
@@ -44,11 +56,11 @@ final class EffectTriggerTypeFilter extends AbstractFilter
 
             $root = $queryBuilder->getRootAliases()[0];
             $this->applyIdInClause($queryBuilder, $root, $ids);
-
+            $this->profiler?->stop('trigger', count($ids));
             return;
         }
 
-        // Fallback: JOIN on effect slots
+        $this->profiler?->start('trigger', 'join');
         $root    = $queryBuilder->getRootAliases()[0];
         $param   = $queryNameGenerator->generateParameterName($property);
         $through = $this->properties[$property] ?? null;
@@ -75,6 +87,7 @@ final class EffectTriggerTypeFilter extends AbstractFilter
                  OR IDENTITY($a3.abilityTrigger) = :$param"
             )
             ->setParameter($param, $triggerId);
+        $this->profiler?->stop('trigger');
     }
 
     public function getDescription(string $resourceClass): array
