@@ -16,6 +16,7 @@ use Doctrine\ORM\QueryBuilder;
  */
 final class SameTriggerCountFilter extends AbstractFilter
 {
+    use CardSearchInClauseTrait;
     protected function filterProperty(
         string $property,
         mixed $value,
@@ -95,7 +96,7 @@ final class SameTriggerCountFilter extends AbstractFilter
         $ids  = $conn->fetchFirstColumn($sql) ?: [0];
 
         $root = $qb->getRootAliases()[0];
-        $qb->andWhere("$root.id IN (:cs_stc_ids)")->setParameter('cs_stc_ids', $ids);
+        $this->applyIdInClause($qb, $root, $ids);
     }
 
     public function getDescription(string $resourceClass): array

@@ -19,6 +19,7 @@ use Doctrine\ORM\QueryBuilder;
  */
 final class EffectSlotFilter extends AbstractFilter
 {
+    use CardSearchInClauseTrait;
     protected function filterProperty(
         string $property,
         mixed $value,
@@ -88,7 +89,7 @@ final class EffectSlotFilter extends AbstractFilter
         $ids  = $conn->fetchFirstColumn($sql) ?: [0];
 
         $root = $qb->getRootAliases()[0];
-        $qb->andWhere("$root.id IN (:cs_slot_ids)")->setParameter('cs_slot_ids', $ids);
+        $this->applyIdInClause($qb, $root, $ids);
     }
 
     // ── Fallback path (CardGroup or other) ─────────────────────────────────

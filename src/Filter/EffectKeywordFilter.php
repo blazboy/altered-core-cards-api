@@ -22,6 +22,7 @@ use Doctrine\ORM\QueryBuilder;
  */
 final class EffectKeywordFilter extends AbstractFilter
 {
+    use CardSearchInClauseTrait;
     protected function filterProperty(
         string $property,
         mixed $value,
@@ -68,7 +69,7 @@ final class EffectKeywordFilter extends AbstractFilter
         $ids  = $conn->fetchFirstColumn($sql) ?: [0];
 
         $root = $qb->getRootAliases()[0];
-        $qb->andWhere("$root.id IN (:cs_kw_ids)")->setParameter('cs_kw_ids', $ids);
+        $this->applyIdInClause($qb, $root, $ids);
     }
 
     // ── Fallback path (CardGroup) ───────────────────────────────────────────

@@ -26,3 +26,13 @@ services:
         tags:
             - { name: serializer.normalizer, priority: 20 }
 
+    App\Service\MeilisearchService:
+        arguments:
+            $url:    '%env(MEILISEARCH_URL)%'
+            $apiKey: '%env(MEILISEARCH_KEY)%'
+
+    # Swap this alias to use a different search backend (or NullSearchBackend to disable).
+    # NullSearchBackend → CardNameFilter falls back to PostgreSQL LIKE automatically.
+    App\Search\SearchBackendInterface:
+        alias: App\Search\MeilisearchBackend
+
