@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ app.request.locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,22 +15,37 @@
         <div class="flex items-center gap-3">
             <span class="text-xl font-bold text-gray-900 dark:text-white">Altered Core</span>
             <span class="text-gray-400">/</span>
-            <span class="text-sm text-gray-500 dark:text-gray-400">Admin</span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">{{ 'nav.admin'|trans|default('Admin') }}</span>
         </div>
         <div class="flex items-center gap-4">
-<a href="{{ path('admin_effects_index') }}"
+            <a href="{{ path('admin_effects_index') }}"
                class="text-sm font-medium {{ app.request.attributes.get('_route') starts with 'admin_effects' ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900' }} dark:text-gray-300">
-                Effets
+                {{ 'nav.effects'|trans }}
             </a>
             <a href="{{ path('admin_abilities_index') }}"
                class="text-sm font-medium {{ app.request.attributes.get('_route') starts with 'admin_abilities' ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900' }} dark:text-gray-300">
-                Abilities
+                {{ 'nav.abilities'|trans }}
             </a>
+            <span class="text-gray-300 dark:text-gray-600">|</span>
+
+            {# Locale switcher #}
+            <div class="flex items-center gap-1 text-xs">
+                <a href="{{ path('switch_locale', {locale: 'fr'}) }}"
+                   class="px-1.5 py-0.5 rounded font-medium {{ app.request.locale == 'fr' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}">
+                    FR
+                </a>
+                <span class="text-gray-300 dark:text-gray-600">/</span>
+                <a href="{{ path('switch_locale', {locale: 'en'}) }}"
+                   class="px-1.5 py-0.5 rounded font-medium {{ app.request.locale == 'en' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}">
+                    EN
+                </a>
+            </div>
+
             <span class="text-gray-300 dark:text-gray-600">|</span>
             <span class="text-sm text-gray-500 dark:text-gray-400">{{ app.user.email }}</span>
             <a href="{{ path('admin_logout') }}"
                class="text-sm text-gray-500 hover:text-red-600 dark:text-gray-400">
-                Déconnexion
+                {{ 'nav.logout'|trans }}
             </a>
         </div>
     </div>
