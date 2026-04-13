@@ -2,11 +2,13 @@
 
 namespace App\Filter;
 
+use App\Debug\FilterProfiler;
 use App\Entity\Card;
 use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\QueryBuilder;
+use Symfony\Contracts\Service\Attribute\Required;
 
 /**
  * Filters by effect slot composition (trigger + condition + effect IDs).
@@ -20,6 +22,15 @@ use Doctrine\ORM\QueryBuilder;
 final class EffectSlotFilter extends AbstractFilter
 {
     use CardSearchInClauseTrait;
+
+    private ?FilterProfiler $profiler = null;
+
+    #[Required]
+    public function setProfiler(FilterProfiler $profiler): void
+    {
+        $this->profiler = $profiler;
+    }
+
     protected function filterProperty(
         string $property,
         mixed $value,
@@ -36,11 +47,14 @@ final class EffectSlotFilter extends AbstractFilter
         $mode = strtolower($context['filters']['effectSlotMode'] ?? 'or');
 
         if ($resourceClass === Card::class) {
+            $this->profiler?->start('effectSlot', 'card_search');
             $this->filterViaCardSearch($value, $mode, $queryBuilder);
             return;
         }
 
+        $this->profiler?->start('effectSlot', 'join');
         $this->filterViaJoin($value, $mode, $queryBuilder, $queryNameGenerator);
+        $this->profiler?->stop('effectSlot');
     }
 
     // ── Fast path (Card) ────────────────────────────────────────────────────
@@ -79,6 +93,7 @@ final class EffectSlotFilter extends AbstractFilter
         }
 
         if (empty($criteriaExprs)) {
+            $this->profiler?->stop('effectSlot');
             return;
         }
 
@@ -90,6 +105,7 @@ final class EffectSlotFilter extends AbstractFilter
 
         $root = $qb->getRootAliases()[0];
         $this->applyIdInClause($qb, $root, $ids);
+        $this->profiler?->stop('effectSlot', count($ids));
     }
 
     // ── Fallback path (CardGroup or other) ─────────────────────────────────

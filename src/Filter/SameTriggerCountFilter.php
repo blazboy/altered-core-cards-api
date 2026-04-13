@@ -2,11 +2,13 @@
 
 namespace App\Filter;
 
+use App\Debug\FilterProfiler;
 use App\Entity\Card;
 use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\QueryBuilder;
+use Symfony\Contracts\Service\Attribute\Required;
 
 /**
  * Filters cards that have at least N effect slots sharing the same abilityTrigger.
@@ -17,6 +19,15 @@ use Doctrine\ORM\QueryBuilder;
 final class SameTriggerCountFilter extends AbstractFilter
 {
     use CardSearchInClauseTrait;
+
+    private ?FilterProfiler $profiler = null;
+
+    #[Required]
+    public function setProfiler(FilterProfiler $profiler): void
+    {
+        $this->profiler = $profiler;
+    }
+
     protected function filterProperty(
         string $property,
         mixed $value,
@@ -36,10 +47,12 @@ final class SameTriggerCountFilter extends AbstractFilter
         }
 
         if ($resourceClass === Card::class) {
+            $this->profiler?->start('sameTrigger', 'card_search');
             $this->filterViaCardSearch($minCount, $queryBuilder);
             return;
         }
 
+        $this->profiler?->start('sameTrigger', 'join');
         $root    = $queryBuilder->getRootAliases()[0];
         $through = $this->properties[$property] ?? null;
 
@@ -61,7 +74,6 @@ final class SameTriggerCountFilter extends AbstractFilter
             ->leftJoin("$joinRoot.effect3", $a3);
 
         if ($minCount === 3) {
-            // All three slots must be non-null and share the same trigger
             $queryBuilder->andWhere(
                 "$a1.abilityTrigger IS NOT NULL
                  AND $a2.abilityTrigger IS NOT NULL
@@ -70,13 +82,13 @@ final class SameTriggerCountFilter extends AbstractFilter
                  AND $a2.abilityTrigger = $a3.abilityTrigger"
             );
         } else {
-            // At least two slots share the same trigger
             $queryBuilder->andWhere(
                 "($a1.abilityTrigger IS NOT NULL AND $a2.abilityTrigger IS NOT NULL AND $a1.abilityTrigger = $a2.abilityTrigger)
                  OR ($a1.abilityTrigger IS NOT NULL AND $a3.abilityTrigger IS NOT NULL AND $a1.abilityTrigger = $a3.abilityTrigger)
                  OR ($a2.abilityTrigger IS NOT NULL AND $a3.abilityTrigger IS NOT NULL AND $a2.abilityTrigger = $a3.abilityTrigger)"
             );
         }
+        $this->profiler?->stop('sameTrigger');
     }
 
     private function filterViaCardSearch(int $minCount, QueryBuilder $qb): void
@@ -97,6 +109,7 @@ final class SameTriggerCountFilter extends AbstractFilter
 
         $root = $qb->getRootAliases()[0];
         $this->applyIdInClause($qb, $root, $ids);
+        $this->profiler?->stop('sameTrigger', count($ids));
     }
 
     public function getDescription(string $resourceClass): array

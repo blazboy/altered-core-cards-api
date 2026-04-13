@@ -2,11 +2,13 @@
 
 namespace App\Filter;
 
+use App\Debug\FilterProfiler;
 use App\Entity\Card;
 use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\QueryBuilder;
+use Symfony\Contracts\Service\Attribute\Required;
 
 /**
  * Filters by presence or absence of effects.
@@ -17,6 +19,15 @@ use Doctrine\ORM\QueryBuilder;
 final class HasNoEffectFilter extends AbstractFilter
 {
     use CardSearchInClauseTrait;
+
+    private ?FilterProfiler $profiler = null;
+
+    #[Required]
+    public function setProfiler(FilterProfiler $profiler): void
+    {
+        $this->profiler = $profiler;
+    }
+
     protected function filterProperty(
         string $property,
         mixed $value,
@@ -36,10 +47,12 @@ final class HasNoEffectFilter extends AbstractFilter
         }
 
         if ($resourceClass === Card::class) {
+            $this->profiler?->start('hasNoEffect', 'card_search');
             $this->filterViaCardSearch($noEffect, $queryBuilder);
             return;
         }
 
+        $this->profiler?->start('hasNoEffect', 'join');
         $root    = $queryBuilder->getRootAliases()[0];
         $through = $this->properties[$property] ?? null;
 
@@ -65,6 +78,7 @@ final class HasNoEffectFilter extends AbstractFilter
         } else {
             $queryBuilder->andWhere("$a1.id IS NOT NULL OR $a2.id IS NOT NULL OR $a3.id IS NOT NULL");
         }
+        $this->profiler?->stop('hasNoEffect');
     }
 
     private function filterViaCardSearch(bool $noEffect, QueryBuilder $qb): void
@@ -78,6 +92,7 @@ final class HasNoEffectFilter extends AbstractFilter
 
         $root = $qb->getRootAliases()[0];
         $this->applyIdInClause($qb, $root, $ids);
+        $this->profiler?->stop('hasNoEffect', count($ids));
     }
 
     public function getDescription(string $resourceClass): array

@@ -8,7 +8,7 @@ namespace App\Search;
  */
 final class NullSearchBackend implements SearchBackendInterface
 {
-    public function searchCardIds(string $query, array $filters = []): ?array
+    public function searchCardIds(string $query, array $attributesToSearchOn = []): ?array
     {
         return null;
     }

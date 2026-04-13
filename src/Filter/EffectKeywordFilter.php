@@ -2,11 +2,13 @@
 
 namespace App\Filter;
 
+use App\Debug\FilterProfiler;
 use App\Entity\Card;
 use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\QueryBuilder;
+use Symfony\Contracts\Service\Attribute\Required;
 
 /**
  * Filters by keyword(s) across effect1/2/3.
@@ -23,6 +25,14 @@ use Doctrine\ORM\QueryBuilder;
 final class EffectKeywordFilter extends AbstractFilter
 {
     use CardSearchInClauseTrait;
+
+    private ?FilterProfiler $profiler = null;
+
+    #[Required]
+    public function setProfiler(FilterProfiler $profiler): void
+    {
+        $this->profiler = $profiler;
+    }
     protected function filterProperty(
         string $property,
         mixed $value,
@@ -46,10 +56,12 @@ final class EffectKeywordFilter extends AbstractFilter
         $mode = strtolower($context['filters']['effectKeywordMode'] ?? 'or');
 
         if ($resourceClass === Card::class) {
+            $this->profiler?->start('keyword', 'card_search');
             $this->filterViaCardSearch($keywords, $mode, $queryBuilder);
             return;
         }
 
+        $this->profiler?->start('keyword', 'join');
         $this->filterViaJoin($keywords, $mode, $queryBuilder, $queryNameGenerator, $property);
     }
 
@@ -70,6 +82,7 @@ final class EffectKeywordFilter extends AbstractFilter
 
         $root = $qb->getRootAliases()[0];
         $this->applyIdInClause($qb, $root, $ids);
+        $this->profiler?->stop('keyword', count($ids));
     }
 
     // ── Fallback path (CardGroup) ───────────────────────────────────────────
