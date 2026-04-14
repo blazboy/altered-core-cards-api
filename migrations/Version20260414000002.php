@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+namespace DoctrineMigrations;
+
+use Doctrine\DBAL\Schema\Schema;
+use Doctrine\Migrations\AbstractMigration;
+
+final class Version20260414000002 extends AbstractMigration
+{
+    public function getDescription(): string
+    {
+        return 'Recreate artist table with reference as text primary key';
+    }
+
+    public function up(Schema $schema): void
+    {
+        $this->addSql('DROP TABLE IF EXISTS artist');
+        $this->addSql('CREATE TABLE artist (
+            reference     VARCHAR(150) NOT NULL PRIMARY KEY,
+            creation_date TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+            update_date   TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL
+        )');
+    }
+
+    public function down(Schema $schema): void
+    {
+        $this->addSql('DROP TABLE IF EXISTS artist');
+        $this->addSql('CREATE TABLE artist (
+            id            SERIAL PRIMARY KEY,
+            reference     VARCHAR(150) NOT NULL,
+            creation_date TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+            update_date   TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL,
+            CONSTRAINT uniq_artist_reference UNIQUE (reference)
+        )');
+    }
+}
