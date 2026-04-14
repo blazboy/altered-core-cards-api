@@ -12,7 +12,7 @@
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/gh/PolluxTroy0/Altered-Card-Renderer@main/altered-card-renderer.js"
-            data-proxy="{{ app.request.schemeAndHttpHost }}/altered-card-renderer-proxy.php"></script>
+            data-proxy="false"></script>
     <script>tailwind.config = { darkMode: 'class' }</script>
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
     <style>
@@ -969,7 +969,7 @@
             return;
         }
         const apiBase = window.location.origin;
-        const apiTemplate = `${apiBase}/api/cards/reference/{ref}`;
+        const apiTemplate = `${apiBase}/api/cards/reference/{ref}?locale={locale}`;
         members.forEach(card => {
             const ref = card.reference ?? null;
             if (!ref) return;
