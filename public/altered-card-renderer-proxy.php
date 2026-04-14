@@ -16,15 +16,17 @@ $CORS_ORIGIN = '*';
 // Allowed image proxy domains (SSRF protection).
 // Add any CDN or S3 bucket host that serves card images.
 $ALLOWED_IMG_DOMAINS = [
-  'altered-prod-eu.s3.amazonaws.com',
-  'img.altered-db.com',
+    'altered-prod-eu.s3.amazonaws.com',
+    'img.altered-db.com',
+    'cdn.alteredcore.org',
 ];
 
 // Allowed card API domains (SSRF protection).
 // The API URL is passed by the renderer via ?api= — only whitelisted domains are accepted.
 $ALLOWED_API_DOMAINS = [
-  'altered-core-cards-api.toxicity.be',
-  'api.altered.gg',
+    'altered-core-cards-api.toxicity.be',
+    'api.altered.gg',
+    'cards.alteredcore.org',
 ];
 
 // ──────────────────────────────────────────────────────────────────
