@@ -2,11 +2,13 @@
 
 namespace App\Search;
 
+use App\Entity\Card;
+
 /**
- * Contract for full-text search backends used by API filters.
+ * Contract for full-text search backends used by API filters and indexing.
  *
- * Returns a list of matching Card IDs, or null if the backend
- * is unavailable / not configured (triggers PostgreSQL fallback).
+ * Read: searchCardIds() returns matching Card IDs, or null to trigger PostgreSQL fallback.
+ * Write: indexCard() / deleteCard() keep the index in sync with DB changes.
  */
 interface SearchBackendInterface
 {
@@ -15,4 +17,8 @@ interface SearchBackendInterface
      * @return int[]|null  null = backend unavailable, use fallback
      */
     public function searchCardIds(string $query, array $attributesToSearchOn = []): ?array;
+
+    public function indexCard(Card $card): void;
+
+    public function deleteCard(Card $card): void;
 }
