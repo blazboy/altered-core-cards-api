@@ -77,6 +77,7 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
 #[ApiFilter(\App\Filter\SameTriggerCountFilter::class, properties: ['minSameTriggerCount' => 'cardGroup'])]
 #[ApiFilter(\App\Filter\EffectSlotFilter::class, properties: ['effectSlot'])]
 #[ApiFilter(\App\Filter\ArtistFilter::class)]
+#[ApiFilter(\App\Filter\BgaQueryFilter::class, properties: ['bga' => 'exact'])]
 class Card implements TimestampInterface
 {
     use TimestampTrait;

@@ -86,12 +86,12 @@ class CardGroup implements TimestampInterface
     private ?Rarity $rarity = null;
 
     #[ORM\ManyToOne(targetEntity: CardType::class, cascade: ['persist'])]
-    #[Groups(['card_group:read', 'card_group:read:detail', 'card:read'])]
+    #[Groups(['card_group:read', 'card_group:read:detail', 'card:list', 'card:read'])]
     private ?CardType $cardType = null;
 
     #[ORM\ManyToMany(targetEntity: CardSubType::class, cascade: ['persist'])]
     #[ORM\JoinTable(name: 'card_group_sub_type_link')]
-    #[Groups(['card_group:read', 'card:read'])]
+    #[Groups(['card_group:read', 'card:list', 'card:read'])]
     #[SerializedName('cardSubTypes')]
     #[ApiProperty(fetchEager: false)]
     private Collection $subTypes;

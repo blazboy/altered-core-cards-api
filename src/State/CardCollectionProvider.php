@@ -46,17 +46,40 @@ final class CardCollectionProvider implements ProviderInterface
             return $result;
         }
 
+        $bga = ($context['filters']['bga'] ?? false);
+
         // Query 1 — ManyToOne associations (no Cartesian product risk)
-        $this->em->createQueryBuilder()
-            ->select('c, s, cg, cgf, cgr, cgct, cgchs')
+        // Always join effects for BGA mode (must load before normalization)
+        $select = $bga
+            ? 'c, s, cg, cgf, cgr, cgct, cgchs, e1, e1t, e1c, e1e, e2, e2t, e2c, e2e, e3, e3t, e3c, e3e'
+            : 'c, s, cg, cgf, cgr, cgct, cgchs';
+
+        $qb = $this->em->createQueryBuilder()
+            ->select($select)
             ->from(Card::class, 'c')
             ->leftJoin('c.set', 's')
             ->leftJoin('c.cardGroup', 'cg')
             ->leftJoin('cg.faction', 'cgf')
             ->leftJoin('cg.rarity', 'cgr')
             ->leftJoin('cg.cardType', 'cgct')
-            ->leftJoin('cg.cardHistoryStatus', 'cgchs')
-            ->where('c.id IN (:ids)')
+            ->leftJoin('cg.cardHistoryStatus', 'cgchs');
+
+        if ($bga) {
+            $qb->leftJoin('cg.effect1', 'e1')
+                ->leftJoin('e1.abilityTrigger', 'e1t')
+                ->leftJoin('e1.abilityCondition', 'e1c')
+                ->leftJoin('e1.abilityEffect', 'e1e')
+                ->leftJoin('cg.effect2', 'e2')
+                ->leftJoin('e2.abilityTrigger', 'e2t')
+                ->leftJoin('e2.abilityCondition', 'e2c')
+                ->leftJoin('e2.abilityEffect', 'e2e')
+                ->leftJoin('cg.effect3', 'e3')
+                ->leftJoin('e3.abilityTrigger', 'e3t')
+                ->leftJoin('e3.abilityCondition', 'e3c')
+                ->leftJoin('e3.abilityEffect', 'e3e');
+        }
+
+        $qb->where('c.id IN (:ids)')
             ->setParameter('ids', $ids)
             ->getQuery()
             ->getResult();

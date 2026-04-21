@@ -23,11 +23,11 @@ class CardSubType
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['card:read', 'card_sub_type:read'])]
+    #[Groups(['card:list', 'card:read', 'card_sub_type:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
-    #[Groups(['card:read', 'card_sub_type:read'])]
+    #[Groups(['card:list', 'card:read', 'card_sub_type:read'])]
     private string $reference;
 
     #[ORM\Column(length: 100, nullable: true)]
@@ -45,7 +45,7 @@ class CardSubType
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $nameDe = null;
 
-    #[Groups(['card:read', 'card_sub_type:read'])]
+    #[Groups(['card:list', 'card:read', 'card_sub_type:read'])]
     public function getName(): array
     {
         return array_filter([

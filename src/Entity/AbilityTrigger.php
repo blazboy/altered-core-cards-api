@@ -24,7 +24,6 @@ class AbilityTrigger
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['ability_trigger:read', 'main_effect:read', 'card:read'])]
     private ?int $id = null;
 
     #[ORM\Column(type: 'integer', unique: true)]
