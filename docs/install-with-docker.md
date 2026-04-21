@@ -11,8 +11,10 @@ _basé sur [Symfony-Docker](https://github.com/dunglas/symfony-docker) recommand
 ## Prérequis
 
 1. Si ce n'est pas déjà fait, [installer Docker Compose](https://docs.docker.com/compose/install/) (v2.25+)
-2. Avoir la BDD des cartes prête : [AlteredCommunity/databases](https://github.com/AlteredCommunity/databases).
-    - Vous pouvez configurer le chemin vers le dossier de la BDD dans `.env.dev`
+2. Avoir la BDD des cartes prête : clonez [AlteredCommunity/databases](https://github.com/AlteredCommunity/databases) et renseignez le chemin dans `.env.local` :
+    ```env
+    COMMUNITY_DATABASE=/chemin/absolu/vers/community_database
+    ```
 
 ## Les commandes Docker à connaître
 
@@ -55,8 +57,10 @@ _based on [Symfony-Docker](https://github.com/dunglas/symfony-docker) as recomme
 ## Prerequisites
 
 1. If not already done, [install Docker Compose](https://docs.docker.com/compose/install/) (v2.25+)
-2. Have the card database ready: [AlteredCommunity/databases](https://github.com/AlteredCommunity/databases).
-    - You can set the path to the database folder in `.env.dev`
+2. Have the card database ready: clone [AlteredCommunity/databases](https://github.com/AlteredCommunity/databases) and set the path in `.env.local`:
+    ```env
+    COMMUNITY_DATABASE=/absolute/path/to/community_database
+    ```
 
 ## Useful Docker Commands
 
@@ -87,3 +91,4 @@ In any case, feel free to check the Makefile to look up available commands.
 4. Open `https://localhost` in your browser and [accept the auto-generated TLS certificate](https://stackoverflow.com/a/15076602/1352334)
 5. For Make users, run `make setup` to save time — still recommended to read the classic install to better understand the setup.
 6. Stop the containers when you are done: _`down`_
+

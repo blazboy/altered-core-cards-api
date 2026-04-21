@@ -42,8 +42,11 @@ services:
             $url:        '%env(MEILISEARCH_URL)%'
             $apiKey:     '%env(MEILISEARCH_KEY)%'
 
-    # Swap this alias to use a different search backend (or NullSearchBackend to disable).
-    # NullSearchBackend → CardNameFilter falls back to PostgreSQL LIKE automatically.
+    # MEILISEARCH_URL set → MeilisearchBackend, empty → NullSearchBackend
     App\Search\SearchBackendInterface:
-        alias: App\Search\MeilisearchBackend
+        factory: ['App\Search\SearchBackendFactory', 'create']
+        arguments:
+            - '%env(MEILISEARCH_URL)%'
+            - '@App\Search\MeilisearchBackend'
+            - '@App\Search\NullSearchBackend'
 
