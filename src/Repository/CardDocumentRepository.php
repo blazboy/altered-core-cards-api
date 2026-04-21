@@ -45,7 +45,7 @@ final class CardDocumentRepository
     public function findDocument(int $cardId): ?array
     {
         $row = $this->connection->executeQuery(
-            $this->buildSql() . ' HAVING c.id = :id',
+            $this->buildSql(whereCardId: true),
             ['id' => $cardId]
         )->fetchAssociative();
 
@@ -62,8 +62,10 @@ final class CardDocumentRepository
 
     // ── Private ──────────────────────────────────────────────────────────────
 
-    private function buildSql(): string
+    private function buildSql(bool $whereCardId = false): string
     {
+        $where = $whereCardId ? 'WHERE c.id = :id' : '';
+
         return <<<SQL
             SELECT
                 c.id,
@@ -95,6 +97,7 @@ final class CardDocumentRepository
                     '[]'
                 )                                                                     AS sub_types
             FROM card c
+            $where
             LEFT JOIN card_group              cg   ON cg.id  = c.card_group_id
             LEFT JOIN card_set                cs   ON cs.id  = c.set_id
             LEFT JOIN faction                 f    ON f.id   = cg.faction_id

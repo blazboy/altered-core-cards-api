@@ -83,7 +83,19 @@ class MainEffect
     #[Groups(['card:read', 'main_effect:read'])]
     private ?AbilityEffect $abilityEffect = null;
 
-    #[Groups(['card:read', 'main_effect:read'])]
+    #[Groups(['card:read:bga'])]
+    public function getConditionId(): ?int
+    {
+        return $this->abilityCondition?->getAlteredId();
+    }
+
+    #[Groups(['card:read:bga'])]
+    public function getEffectId(): ?int
+    {
+        return $this->abilityEffect?->getAlteredId();
+    }
+
+    #[Groups(['card:read', 'main_effect:read', 'card:read:bga'])]
     public function getText(): array
     {
         return array_filter([
