@@ -4,6 +4,25 @@ nav:
   abilities: Abilities
   logout: Déconnexion
 
+homepage:
+  badge: "REST · JSON · API Platform"
+  subtitle: "Données de cartes maintenues par la communauté pour l'Altered TCG. Cartes, groupes de cartes, factions, sets et plus — tout en un seul endroit."
+  btn_docs: "Parcourir la doc API →"
+  btn_try: "Essayer"
+  section_endpoints: Endpoints
+  section_endpoints_desc: "Toutes les réponses sont paginées (30 éléments/page par défaut). Les collections retournent <code class=\"text-indigo-300 bg-gray-800 px-1.5 py-0.5 rounded text-xs\">member</code> et <code class=\"text-indigo-300 bg-gray-800 px-1.5 py-0.5 rounded text-xs\">totalItems</code>."
+  endpoint_cards_desc: "Liste toutes les cartes avec pagination."
+  endpoint_card_groups_desc: "Liste les groupes de cartes (cartes logiques). Chaque groupe agrège tous les prints d'une carte."
+  endpoint_factions_desc: "Liste toutes les factions (BR, AX, LY, MU, OR, YZ)."
+  endpoint_sets_desc: "Liste tous les sets de cartes."
+  filter_examples: "Exemples de filtres"
+  section_quickstart: "Démarrage rapide"
+  quickstart_desc: "Récupérer les groupes de cartes Common & Rare Bravos du set CORE."
+  response_label: "réponse"
+  section_factions: Factions
+  footer_text: "Altered Core API — Projet communautaire. Non affilié à Equinox."
+  footer_link: "Documentation API →"
+
 query:
   title: Query Builder
   section:

@@ -107,3 +107,22 @@ admin:
     reset_btn: Reset
   pagination:
     page_of: "Page %page% of %total%"
+
+homepage:
+  badge: "REST · JSON · API Platform"
+  subtitle: "Community-maintained card data for the Altered TCG. Cards, card groups, factions, sets and more — all in one place."
+  btn_docs: "Browse API docs →"
+  btn_try: "Try it live"
+  section_endpoints: Endpoints
+  section_endpoints_desc: "All responses are paginated (30 items/page by default). Collections return <code class=\"text-indigo-300 bg-gray-800 px-1.5 py-0.5 rounded text-xs\">member</code> and <code class=\"text-indigo-300 bg-gray-800 px-1.5 py-0.5 rounded text-xs\">totalItems</code>."
+  endpoint_cards_desc: "List all cards with pagination."
+  endpoint_card_groups_desc: "List card groups (logical cards). Each group aggregates all prints of a card."
+  endpoint_factions_desc: "List all factions (BR, AX, LY, MU, OR, YZ)."
+  endpoint_sets_desc: "List all card sets."
+  filter_examples: "Filter examples"
+  section_quickstart: "Quick start"
+  quickstart_desc: "Fetch Bravos common & rare card groups from the CORE set."
+  response_label: "response"
+  section_factions: Factions
+  footer_text: "Altered Core API — Community project. Not affiliated with Equinox."
+  footer_link: "API Documentation →"
