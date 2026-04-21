@@ -14,6 +14,8 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Index(name: "idx_main_effect_ability_key", fields: ["abilityKey"])]
+#[ORM\Index(name: "idx_main_effect_text_en", fields: ["textEn"])]
+#[ORM\Index(name: "idx_main_effect_text_fr", fields: ["textFr"])]
 #[ORM\Entity(repositoryClass: MainEffectRepository::class)]
 #[ApiResource(
     operations: [

@@ -157,12 +157,23 @@ class MainEffectRepository extends ServiceEntityRepository
 
     public function findByAllTexts(?string $fr, ?string $en, ?string $de, ?string $es, ?string $it): ?MainEffect
     {
-        return $this->findOneBy([
-            'textFr' => $fr,
-            'textEn' => $en,
-            'textDe' => $de,
-            'textEs' => $es,
-            'textIt' => $it,
-        ]);
+        $id = $this->getEntityManager()->getConnection()->fetchOne(
+            "SELECT id FROM main_effect
+             WHERE COALESCE(text_fr, '') = :fr
+               AND COALESCE(text_en, '') = :en
+               AND COALESCE(text_de, '') = :de
+               AND COALESCE(text_es, '') = :es
+               AND COALESCE(text_it, '') = :it
+             LIMIT 1",
+            [
+                'fr' => $fr ?? '',
+                'en' => $en ?? '',
+                'de' => $de ?? '',
+                'es' => $es ?? '',
+                'it' => $it ?? '',
+            ]
+        );
+
+        return $id ? $this->find((int) $id) : null;
     }
 }

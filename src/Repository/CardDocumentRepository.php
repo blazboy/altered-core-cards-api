@@ -97,7 +97,6 @@ final class CardDocumentRepository
                     '[]'
                 )                                                                     AS sub_types
             FROM card c
-            $where
             LEFT JOIN card_group              cg   ON cg.id  = c.card_group_id
             LEFT JOIN card_set                cs   ON cs.id  = c.set_id
             LEFT JOIN faction                 f    ON f.id   = cg.faction_id
@@ -106,6 +105,7 @@ final class CardDocumentRepository
             LEFT JOIN card_group_translation  cgt  ON cgt.card_group_id = cg.id
             LEFT JOIN card_group_sub_type_link cgsl ON cgsl.card_group_id = cg.id
             LEFT JOIN card_sub_type           cst  ON cst.id = cgsl.card_sub_type_id
+            $where
             GROUP BY
                 c.id, c.reference, c.kickstarter, c.promo, c.is_serialized, c.variation,
                 cs.reference,

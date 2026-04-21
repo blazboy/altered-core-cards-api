@@ -61,6 +61,8 @@
         }
         .dark .ts-dropdown .option.active { background: rgb(30 58 138); color: rgb(147 197 253); }
         .ts-wrapper .ts-control .remove { color: inherit; opacity: 0.6; margin-left: 0.25rem; }
+        .stat-chip { cursor: pointer; user-select: none; }
+        .stat-chip.chip-active { background-color: rgb(59 130 246) !important; color: #fff !important; }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 antialiased text-sm">
@@ -204,7 +206,7 @@
                 } %}
                 <div>
                     <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">{{ label }}</label>
-                    <div class="flex gap-1">
+                    <div class="flex gap-1 mb-1">
                         <select data-stat-op="{{ param }}"
                                 class="stat-op w-12 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1 shrink-0">
                             <option value="exact">=</option>
@@ -216,6 +218,13 @@
                         <input type="number" min="0" max="12" data-stat-val="{{ param }}"
                                class="stat-val min-w-0 w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded p-1.5"
                                placeholder="—">
+                    </div>
+                    <div class="flex flex-wrap gap-0.5">
+                        {% for i in 0..12 %}
+                        <button type="button"
+                                data-stat-chip="{{ param }}" data-val="{{ i }}"
+                                class="stat-chip min-w-[1.15rem] h-[1.15rem] px-0.5 text-[0.6rem] leading-none rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-900 font-medium transition-colors">{{ i }}</button>
+                        {% endfor %}
                     </div>
                 </div>
                 {% endfor %}
@@ -741,11 +750,20 @@
             }
         });
 
-        // Stat fields with comparison operators
+        // Stat fields — chips (IN) take priority over range operator+value
+        const handledByChips = new Set();
+        document.querySelectorAll('.stat-chip.chip-active').forEach(chip => {
+            const param = chip.dataset.statChip;
+            if (!param) return;
+            params.append(`${param}[]`, chip.dataset.val);
+            handledByChips.add(param);
+        });
+
         document.querySelectorAll('.stat-val').forEach(el => {
             const param = el.dataset.statVal;
-            const val   = (el.value ?? '').trim();
-            if (!param || val === '') return;
+            if (!param || handledByChips.has(param)) return;
+            const val = (el.value ?? '').trim();
+            if (val === '') return;
             const opEl = document.querySelector(`.stat-op[data-stat-op="${param}"]`);
             const op   = opEl?.value ?? 'exact';
             if (op === 'exact') {
@@ -811,6 +829,13 @@
     document.querySelectorAll('.stat-val, .stat-op').forEach(el => {
         el.addEventListener('input', updatePreview);
         el.addEventListener('change', updatePreview);
+    });
+
+    document.querySelectorAll('.stat-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            chip.classList.toggle('chip-active');
+            updatePreview();
+        });
     });
 
     document.getElementById('sort-select')?.addEventListener('change', updatePreview);
@@ -1100,6 +1125,7 @@
         // Reset stat fields
         document.querySelectorAll('.stat-val').forEach(el => el.value = '');
         document.querySelectorAll('.stat-op').forEach(el => el.value = 'exact');
+        document.querySelectorAll('.stat-chip.chip-active').forEach(c => c.classList.remove('chip-active'));
         const sortSel = document.getElementById('sort-select');
         if (sortSel) sortSel.value = '';
         // Reset Tom Select instances

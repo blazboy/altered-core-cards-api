@@ -140,18 +140,12 @@ class ImportCardsCommand extends Command
                 $isNew = !isset($alteredIdMap[$alteredId]);
                 $card  = $existingCards[$alteredId] ?? new Card();
 
-                if (isset($data['translations']['fr-fr'])) {
-                    $card = $this->cardBuilder->build($card, $data['translations']['fr-fr'], 'fr-fr');
-                }
+                // en-us first so effects are created before other locales set their texts
+                $card = $this->cardBuilder->build($card, $data, 'en-us');
 
                 foreach ($data['translations'] ?? [] as $locale => $translationData) {
-                    if ($locale === 'fr-fr') {
-                        continue;
-                    }
                     $card = $this->cardBuilder->build($card, $translationData, $locale);
                 }
-
-                $card = $this->cardBuilder->build($card, $data, 'en-us');
 
                 $this->em->persist($card->getCardGroup());
                 $this->em->persist($card);
@@ -162,6 +156,8 @@ class ImportCardsCommand extends Command
                 $io->warning(sprintf('Error on %s: %s', $alteredId, $e->getMessage()));
             }
         }
+
+        $this->cardBuilder->reconcileNewEffects($this->em);
 
         try {
             $this->em->flush();

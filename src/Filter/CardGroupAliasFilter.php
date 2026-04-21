@@ -5,6 +5,7 @@ namespace App\Filter;
 use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\QueryBuilder;
 
 /**
@@ -75,8 +76,20 @@ final class CardGroupAliasFilter extends AbstractFilter
         if (isset(self::FIELD_MAP[$property])) {
             $field = self::FIELD_MAP[$property];
 
-            // Range operators: mainCost[gte]=5 → $value = ['gte' => '5']
             if (is_array($value)) {
+                // Array of values → IN: mainCost[]=3&mainCost[]=5
+                if (array_is_list($value)) {
+                    $values = array_map('intval', array_filter($value, fn($v) => $v !== ''));
+                    if (!empty($values)) {
+                        $p = $queryNameGenerator->generateParameterName($field . '_in');
+                        $queryBuilder
+                            ->andWhere("$cgAlias.$field IN (:$p)")
+                            ->setParameter($p, $values, ArrayParameterType::INTEGER);
+                    }
+                    return;
+                }
+
+                // Range operators: mainCost[gte]=5 → $value = ['gte' => '5']
                 $ops = ['gt' => '>', 'gte' => '>=', 'lt' => '<', 'lte' => '<='];
                 foreach ($ops as $key => $op) {
                     if (isset($value[$key]) && $value[$key] !== '') {

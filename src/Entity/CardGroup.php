@@ -123,15 +123,15 @@ class CardGroup implements TimestampInterface
     #[Groups(['card_group:read', 'card:list', 'card:read'])]
     private ?string $permanent = null;
 
-    #[ORM\ManyToOne(targetEntity: MainEffect::class, cascade: ['persist'])]
+    #[ORM\ManyToOne(targetEntity: MainEffect::class)]
     #[Groups(['card_group:read', 'card:read'])]
     private ?MainEffect $effect1 = null;
 
-    #[ORM\ManyToOne(targetEntity: MainEffect::class, cascade: ['persist'])]
+    #[ORM\ManyToOne(targetEntity: MainEffect::class)]
     #[Groups(['card_group:read', 'card:read'])]
     private ?MainEffect $effect2 = null;
 
-    #[ORM\ManyToOne(targetEntity: MainEffect::class, cascade: ['persist'])]
+    #[ORM\ManyToOne(targetEntity: MainEffect::class)]
     #[Groups(['card_group:read', 'card:read'])]
     private ?MainEffect $effect3 = null;
 

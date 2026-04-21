@@ -8,6 +8,7 @@ use App\Entity\Rarity;
 use App\Repository\RarityRepository;
 use App\Repository\SetRepository;
 use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
 
 class CardBuilder
 {
@@ -24,6 +25,11 @@ class CardBuilder
     {
         $this->rarityCache = [];
         $this->cardGroupBuilder->clearCache();
+    }
+
+    public function reconcileNewEffects(EntityManagerInterface $em): void
+    {
+        $this->cardGroupBuilder->reconcileNewEffects($em);
     }
 
     public function build(Card $card, array $data, string $locale): Card
