@@ -16,6 +16,8 @@ final readonly class CardScraperService
         private Filesystem $filesystem,
         #[Autowire(env: 'COMMUNITY_DATABASE')]
         private string $defaultDirectory,
+        #[Autowire('%kernel.project_dir%')]
+        private string $projectDir,
     ) {}
 
     /**
@@ -47,7 +49,7 @@ final readonly class CardScraperService
         }
 
         $base      = rtrim($baseDirectory ?? $this->defaultDirectory, '/');
-        $directory = sprintf('%s/%s/%s/%s', $base, $set, $faction, $cardNumber);
+        $directory = sprintf('%s/%s/%s/%s/%s', $this->projectDir, $base, $set, $faction, $cardNumber);
         $filePath  = sprintf('%s/%s.json', $directory, $reference);
 
         $this->filesystem->mkdir($directory);
