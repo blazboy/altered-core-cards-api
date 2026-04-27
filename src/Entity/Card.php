@@ -51,6 +51,7 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
             paginationFetchJoinCollection: false,
             paginationClientItemsPerPage: true,
             paginationMaximumItemsPerPage: 1000,
+            forceEager: false,
         ),
     ],
     normalizationContext: ['groups' => ['card:read']],

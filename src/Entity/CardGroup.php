@@ -39,6 +39,7 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
             provider: \App\State\CardGroupCollectionProvider::class,
             normalizationContext: ['groups' => ['card_group:read']],
             paginationFetchJoinCollection: false,
+            forceEager: false,
         ),
     ],
     paginationItemsPerPage: 30,
