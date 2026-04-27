@@ -29,14 +29,21 @@ final class ReferenceFilter extends AbstractFilter
             return;
         }
 
-        $alias = $queryBuilder->getRootAliases()[0];
-        $joinAlias = $queryNameGenerator->generateJoinAlias($property);
+        $alias     = $queryBuilder->getRootAliases()[0];
         $paramName = $queryNameGenerator->generateParameterName($property);
 
+        $metadata      = $this->getManagerRegistry()->getManagerForClass($resourceClass)->getClassMetadata($resourceClass);
+        $targetClass   = $metadata->getAssociationTargetClass($property);
+        $subAlias      = $queryNameGenerator->generateJoinAlias($property);
+
+        $subDql = sprintf(
+            'SELECT %s.id FROM %s %s WHERE %s.reference IN (:%s)',
+            $subAlias, $targetClass, $subAlias, $subAlias, $paramName,
+        );
+
         $queryBuilder
-            ->innerJoin(sprintf('%s.%s', $alias, $property), $joinAlias)
-            ->andWhere(sprintf('%s.reference IN (:%s)', $joinAlias, $paramName))
-            ->setParameter($paramName, $value);
+            ->andWhere(sprintf('IDENTITY(%s.%s) IN (%s)', $alias, $property, $subDql))
+            ->setParameter($paramName, (array) $value);
     }
 
     public function getDescription(string $resourceClass): array

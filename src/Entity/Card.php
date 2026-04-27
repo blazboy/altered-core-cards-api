@@ -26,6 +26,7 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
 #[ORM\Index(name: "idx_card_altered_id", fields: ["alteredId"])]
 #[ORM\Index(name: "idx_card_set", fields: ["set"])]
 #[ORM\Index(name: "idx_card_rarity", fields: ["rarity"])]
+#[ORM\Index(name: "idx_card_rarity_id", fields: ["rarity", "id"])]
 #[ORM\Index(name: "idx_card_card_group", fields: ["cardGroup"])]
 #[ORM\Index(name: "idx_card_card_number", fields: ["cardNumber"])]
 #[ORM\Index(name: "idx_card_is_serialized", fields: ["isSerialized"])]
