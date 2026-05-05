@@ -259,16 +259,8 @@ class ImportEquinoxCardsCommand extends Command
 
                 $localizedPayloads = $this->buildLocalizedPayloads($data);
 
-                // en-us first: creates effects, sets gameplay stats and new fields
-                $card = $this->cardBuilder->build($card, $localizedPayloads['en-us'], 'en-us');
-
-                foreach ($localizedPayloads as $locale => $payload) {
-                    if ($locale === 'en-us') {
-                        continue;
-                    }
-                    $io->writeln(sprintf('    → locale %s: "%s"', $locale, $payload['name'] ?? '?'), OutputInterface::VERBOSITY_VERY_VERBOSE);
-                    $card = $this->cardBuilder->build($card, $payload, $locale);
-                }
+                // Single pass: builds CardGroup + gameplay stats once, then applies all locales
+                $card = $this->cardBuilder->buildAllLocales($card, $localizedPayloads);
 
                 $io->writeln(sprintf(
                     '    exclusive=%s  lowerPrice=%s  product=%s  serialized=%s',
