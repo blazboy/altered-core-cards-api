@@ -5,6 +5,7 @@ namespace App\Command;
 use App\Builder\CardBuilder;
 use App\Entity\Artist;
 use App\Entity\Card;
+use App\EventListener\CardSearchListener;
 use App\EventListener\MeilisearchSyncListener;
 use App\Repository\ArtistRepository;
 use App\Repository\CardRepository;
@@ -101,8 +102,9 @@ class ImportEquinoxCardsCommand extends Command
 
         $this->em->getConnection()->getConfiguration()->setMiddlewares([]);
 
-        // Disable Meilisearch sync during import — re-indexed in bulk afterwards
+        // Disable search index sync during import — re-indexed in bulk afterwards
         MeilisearchSyncListener::$disabled = true;
+        CardSearchListener::$disabled = true;
 
         $finder = new Finder();
         $finder->files()->name('*.json')->in($directory);
