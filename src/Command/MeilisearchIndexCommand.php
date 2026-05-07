@@ -54,7 +54,23 @@ final class MeilisearchIndexCommand extends Command
 
         $indexed = 0;
         foreach ($this->cardDocumentRepository->streamDocuments() as $batch) {
-            $this->meilisearch->getIndex()->addDocuments($batch);
+            // Encode ourselves with JSON_INVALID_UTF8_IGNORE so that any residual
+            // invalid byte sequences are silently dropped instead of producing lone
+            // surrogates that PHP considers valid but Meilisearch's Rust parser rejects.
+            $json = json_encode($batch, JSON_INVALID_UTF8_IGNORE);
+
+            if ($json === false) {
+                foreach ($batch as $doc) {
+                    if (json_encode($doc, JSON_INVALID_UTF8_IGNORE) === false) {
+                        $io->warning(sprintf('Card ID %d skipped (JSON error: %s)', $doc['id'], json_last_error_msg()));
+                    }
+                }
+                $indexed += count($batch);
+                $progressBar->advance(count($batch));
+                continue;
+            }
+
+            $this->meilisearch->getIndex()->addDocumentsJson($json);
             $indexed += count($batch);
             $progressBar->advance(count($batch));
         }

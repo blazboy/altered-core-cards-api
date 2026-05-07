@@ -49,6 +49,18 @@ final class CachedCountCollectionProvider implements ProviderInterface
 
         $filters = $this->normalizeFilters($context['filters'] ?? []);
 
+        // SearchAwareCollectionProvider already fetched the total from Meilisearch — use it
+        // directly and skip both the COUNT query and the Redis cache.
+        if (isset($context['_meili_total'])) {
+            return new CachedTotalPaginator($result, (float) $context['_meili_total']);
+        }
+
+        // Name (text) search: infinite filter combinations → skip the cache.
+        // Meilisearch was unavailable, so fall back to a one-off Doctrine COUNT (no caching).
+        if (isset($filters['name'])) {
+            return new CachedTotalPaginator($result, $result->getTotalItems());
+        }
+
         // No filters → use PostgreSQL's own row estimate from the system catalog.
         // Updated by autovacuum after each ANALYZE; run `ANALYZE card` after bulk imports.
         if (empty($filters)) {
